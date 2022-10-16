@@ -48,7 +48,7 @@ class RRTree_star(RRTree):
 
             # bring closer random coordinate to tree
             accepted_coordinate_in_float = self.bring_closer(rand_coordinate=rand_coordinate)
-            accepted_coordinate = tuple(int(x) for x in accepted_coordinate_in_float)
+            #accepted_coordinate = tuple(int(x) for x in accepted_coordinate_in_float)
 
             
             # if tree first saw given goal , instead of adding new random , add goal
