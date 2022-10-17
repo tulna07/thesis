@@ -1,0 +1,6 @@
+$ export TURTLEBOT3_MODEL=burger
+$ roslaunch turtlebot3_gazebo turtlebot3_world.launch
+roslaunch turtlebot3_gazebo turtlebot3_house.launch
+roslaunch turtlebot3_teleop turtlebot3_teleop_key.launch
+roslaunch turtlebot3_slam turtlebot3_slam.launch slam_methods:=gmapping
+rosrun map_server map_saver -f ~/map

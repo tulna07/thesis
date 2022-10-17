@@ -1,0 +1,17 @@
+__pycache__/*
+ROS_odom_imagePixel_converter/__pycache__/*
+*~
+venv/*
+debug.py
+test.*
+paper.txt
+marker_fillstyle_reference.py
+simple_polygon_kernel/*
+test_find_configuration_space.py
+.idea/csv-plugin.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/autonomousRobot.iml
+.idea/.gitignore
