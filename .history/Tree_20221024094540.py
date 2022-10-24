@@ -23,7 +23,7 @@ class Node:
         self.neighbours = []        # node's neighbours (for RTTx)
         self.neighbours_weight = [] # node's neighbours weight (for RRTx)
         self.visited = False        # status of visitting
-     
+
     ''' set lmc '''
     def set_lmc(self, x):
         self.lmc = x
@@ -417,4 +417,4 @@ class Tree:
             if top_node.cost - top_node.lmc > delta_consistency:
                 self.update_LMC(node=top_node)
                 self.rewire_RRTx(node=top_node, rrt_queue=rrtx_queue); 
-            top_node.cost = top_node.lmc      
+            top_node.cost = top_node.lmc

@@ -331,15 +331,15 @@ class Robot(Robot_base):
                             obstacles_line_segments=obstacles.obstacles_line_segments)
         return is_collision
     
-    # def check_in_empty_space(self):
-    #     if self.possible_actions is None:
-    #         return False
+    def check_in_empty_space(self):
+        if self.possible_actions is None:
+            return False
             
-    #     for action in self.possible_actions:
-    #         if self.coordinate == action.coords:
-    #             return False
-    #     return True
+        for action in self.possible_actions:
+            if self.coordinate == action.coords:
+                return False
+        return True
 
-    # def check_wrong_move(self, obstacles):
-    #     return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
+    def check_wrong_move(self, obstacles):
+        return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
             

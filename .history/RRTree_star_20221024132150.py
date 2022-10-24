@@ -12,7 +12,7 @@ import pickle
 from Tree import Node, Tree
 import sys
 
-sys.setrecursionlimit(10000)
+sys.setrecursionlimit(12000)
 
 class RRTree_star(RRTree):
 

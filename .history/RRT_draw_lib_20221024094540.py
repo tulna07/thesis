@@ -223,32 +223,4 @@ class Plot_RRT(Plot_base):
                 self.point_text(pt.coords, "1r", 'q')
         if not easy_experiment:
             self.pause(1)
-            
-    def build_RRT_star(self, num_iter, Tree, obstacles, goal_coords, start_coords, color_tree=TreeColor.no):
-        
-        # clear plot
-        self.clear()
-
-        ''' draw map obstacles/world '''            
-        # prepare title
-        status_title = self.prepare_title(num_iter, Tree.total_goal_cost)
-
-        # plot map
-        if obstacles is None:
-            obstacles = Obstacles() # replace with empty obstacle
-
-        if show_map:
-            self.show_map(world_name=None, obstacles=obstacles, plot_title=status_title)
-        
-        # draw current tree
-        self.tree(Tree, color_mode=color_tree, neighbour_en=True)
-
-        # draw goal
-        self.goal(goal_coords, Tree.reach_goal, None)
-
-        # draw start 
-        self.start(start_coords)
-
-        # path from root to goal
-        self.path(Tree.path_to_goal, ls_edge=ls_ahead_path, ls_node=ls_path_node, lw=lw_path)            
 

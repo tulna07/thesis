@@ -10,9 +10,6 @@ from Program_config import *
 from Obstacles import Obstacles
 import pickle
 from Tree import Node, Tree
-import sys
-
-sys.setrecursionlimit(10000)
 
 class RRTree_star(RRTree):
 
@@ -51,7 +48,7 @@ class RRTree_star(RRTree):
 
             # bring closer random coordinate to tree
             accepted_coordinate_in_float = self.bring_closer(rand_coordinate=rand_coordinate)
-            accepted_coordinate = tuple(int(x) for x in accepted_coordinate_in_float)
+            #accepted_coordinate = tuple(int(x) for x in accepted_coordinate_in_float)
 
             
             # if tree first saw given goal , instead of adding new random , add goal
@@ -67,6 +64,9 @@ class RRTree_star(RRTree):
 
             ''' rewire for RRT* '''
             self.rewire(node=new_node, neighbour_nodes=neighbour_nodes)
+
+            # @Tu
+            is_collision = self.local_obstacle_nodes(neighbour_nodes=neighbour_nodes, obstacles=obstacles)
                 
             if self.reach_goal:
                 goal_node = self.get_node_by_coords(goal_coordinate)
@@ -80,34 +80,34 @@ class RRTree_star(RRTree):
                     neighbour_nodes=neighbour_nodes, nearest_neighbour_node=nearest_neighbour_node, color_tree=TreeColor.by_cost)
     
     # @Tu
-    def get_visited_neighbor_nodes(self, neighbour_nodes, obstacles: Obstacles):
+    def local_obstacle_nodes(self, neighbour_nodes, obstacles: Obstacles):
         if neighbour_nodes is None:
             return
 
-        visited_neighbor_nodes = []
+        obstacle_nodes = []
         for node in neighbour_nodes:
             collision = obstacles.check_point_collision(point=node.coords,\
                             obstacles_line_segments=obstacles.obstacles_line_segments)
-            if not collision:
-                visited_neighbor_nodes.append(node)
-                node.set_visited()
-            else:
+            if collision:
+                obstacle_nodes.append(node)
                 node.set_inactive()
-        return visited_neighbor_nodes
-    
-    
-    def draw_RRT_star(self,  goal_coordinate, start_coordinate, plotter: Plot_RRT=None, obstacles=None):
-        plotter.build_RRT_star(num_iter= self.sampling_size - 1, Tree=self, obstacles=obstacles, goal_coords=goal_coordinate, \
-                    start_coords=start_coordinate, color_tree=TreeColor.by_cost)
+            else:
+                node.set_visited()
+        
+        # print("hello")
+        # for node in obstacle_nodes:
+        #     print(node.coords)
+
+        return obstacle_nodes 
 
 # @ Tu
 HM_EPISODES = 40000
 
 MOVE_PENALTY = 1
 WRONG_MOVE_PENALTY = 300 # Robot run into obstacles or in empty space
-GOAL_REWARD = 1000
+GOAL_REWARD = 25
 
-EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
+EPS_DECAY = 0.9998  # Every episode will be epsilon*EPS_DECAY
 SHOW_EVERY = 3000  # how often to play through env visually.
 
 LEARNING_RATE = 0.1
@@ -121,72 +121,60 @@ if start_q_table is None:
 else:
   with open(start_q_table, "rb") as f:
     q_table = pickle.load(f)
-    
-def reinforcement_learning():
-    return
 
 def robot_main(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     # Training
-    epsilon = 1
+    epsilon = 0.9
     episode_rewards = []
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
+        # print("new eppppp")
         Tree.path_to_goal = []
         while True:
-            robot_state = robot.get_robot_coords()
-            # visualize
-            node = Tree.get_node_by_coords(robot_state)
+            observation = robot.get_observation(Tree=Tree)
+            node = Tree.get_node_by_coords(robot.coordinate)
             Tree.path_to_goal.append(node)
-            
-            if not robot_state in q_table:
-                q_table[robot_state] = [0 for i in range(80)]
+            # print(observation)
+            if not observation in q_table:
+                q_table[observation] = [np.random.uniform(-5, 0) for i in range(80)]
 
             if np.random.random() > epsilon:
                 # GET THE ACTION
-                robot_action = np.argmax(q_table[robot_state])
+                action = np.argmax(q_table[observation])
             else:
-                neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
-                visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
-                if visited_neighbor_nodes:
-                    chosen_neighbor_index = np.random.randint(0, len(visited_neighbor_nodes) - 1)
-                    for idx in range(len(robot.grid_coordinates)):
-                        if visited_neighbor_nodes[chosen_neighbor_index].coords == robot.grid_coordinates[idx]:
-                            robot_action = idx
-                            break
-                else:
-                    break        
-                
+                action = np.random.randint(0, 80)
 
             # Take the action!
-            robot.action(robot_action)
-            
+            robot.action(action)
             robot.is_reach_goal(goal)
             if robot.reach_goal:
                 reward = GOAL_REWARD
-            # elif robot.check_wrong_move(obstacles):
-            #     reward = -WRONG_MOVE_PENALTY
+            elif robot.check_wrong_move(obstacles):
+                reward = -WRONG_MOVE_PENALTY
             else:
-                reward = MOVE_PENALTY
+                reward = -MOVE_PENALTY
             ## NOW WE KNOW THE REWARD, LET'S CALC YO
             # first we need to obs immediately after the move.
-            robot_next_state = robot.get_robot_coords()
-            if not robot_next_state in q_table:
-                q_table[robot_next_state] = [0 for i in range(80)]
-            max_future_q = np.max(q_table[robot_next_state])
-            current_q = q_table[robot_next_state][robot_action]
+            new_observation = robot.get_observation(Tree=Tree)
+            # print(new_observation)
+            if not new_observation in q_table:
+                q_table[new_observation] = [np.random.uniform(-5, 0) for i in range(80)]
+            max_future_q = np.max(q_table[new_observation])
+            current_q = q_table[observation][action]
 
             if reward == GOAL_REWARD:
                 new_q = GOAL_REWARD
             else:
                 new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-            q_table[robot_state][robot_action] = new_q
+            q_table[observation][action] = new_q
 
             # if show:
 
             episode_reward += reward
             if reward == GOAL_REWARD:
                 print("reach goal")
+            if reward == GOAL_REWARD or reward == -WRONG_MOVE_PENALTY:
                 break
             
         if reward == GOAL_REWARD:
@@ -195,18 +183,16 @@ def robot_main(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             print("len path to goal", len(Tree.path_to_goal), start)
             with open("qtable.pickle", "wb") as f:
                 pickle.dump(q_table, f)
-                return
+            # return
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
         epsilon *= EPS_DECAY
         
+def draw_RRT_star(self,  goal_coordinate, start_coordinate, plotter: Plot_RRT=None, obstacles=None):
+        plotter.build_RRT_star(num_iter= self.sampling_size - 1, Tree=self, obstacles=obstacles, goal_coords=goal_coordinate, \
+                    start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 if __name__ == '__main__':
-    
-    #read tree from rrt_star.pickle
-    # with open('rrt_star.pickle', 'rb') as f: 
-    #     RRT_star = pickle.load(f)
-    
     ''' initial parameters '''
     # get user input
     menu_result = menu_RRT()
@@ -244,13 +230,10 @@ if __name__ == '__main__':
                     random_area=random_area, sample_size=sample_size)
     RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
     
-    # save the tree
-    with open('rrt_star.pickle', 'wb') as f:
-        pickle.dump(RRT_star, f)
-    
-    
+
     # @Tu
-    # robot_main(start=start_cooridinate, goal=goal_coordinate, obstacles=obstacles, vision_range=5, Tree=RRT_star)
+    robot = Robot(start=start_cooridinate, goal=goal_coordinate, vision_range=5)
+    robot_main(start=start_cooridinate, goal=goal_coordinate, obstacles=obstacles, vision_range=5, Tree=RRT_star)
     RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate, plotter=plotter, obstacles=obstacles)
     plotter.show()
 

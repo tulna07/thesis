@@ -322,24 +322,38 @@ class Robot(Robot_base):
                     continue
                 self.grid_coordinates.append((x + self.coordinate[0], y + self.coordinate[1]));
 
-    #get coordinate of a node (miisie)
-    def get_robot_coords(self):
-        return self.coordinate
+    def get_observation(self, Tree):
+        self.possible_actions = Tree.neighbour_nodes(self.coordinate, self.vision_range)
+        self.observation = ()
+        indices = []
+
+        relative_coord = (self.coordinate[0] - self.goal[0],  self.coordinate[1] - self.goal[1])
+
+        if self.possible_actions is None:
+            self.observation = (0, 0), relative_coord
+            return self.observation
+
+        for action in self.possible_actions:
+            idx = self.grid_coordinates.index(action.coords)
+            indices.append(idx)
+
+        self.observation = tuple(indices), relative_coord
+        return self.observation
     
     def check_in_obstacle(self, obstacles):
         is_collision = obstacles.check_point_collision(point=self.coordinate,\
                             obstacles_line_segments=obstacles.obstacles_line_segments)
         return is_collision
     
-    # def check_in_empty_space(self):
-    #     if self.possible_actions is None:
-    #         return False
+    def check_in_empty_space(self):
+        if self.possible_actions is None:
+            return False
             
-    #     for action in self.possible_actions:
-    #         if self.coordinate == action.coords:
-    #             return False
-    #     return True
+        for action in self.possible_actions:
+            if self.coordinate == action.coords:
+                return False
+        return True
 
-    # def check_wrong_move(self, obstacles):
-    #     return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
+    def check_wrong_move(self, obstacles):
+        return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
             
