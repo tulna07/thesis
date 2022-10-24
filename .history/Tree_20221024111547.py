@@ -23,6 +23,10 @@ class Node:
         self.neighbours = []        # node's neighbours (for RTTx)
         self.neighbours_weight = [] # node's neighbours weight (for RRTx)
         self.visited = False        # status of visitting
+
+    #get coordinate of a node (miisie)
+    def get_coord(self):
+        return self.coords 
      
     ''' set lmc '''
     def set_lmc(self, x):

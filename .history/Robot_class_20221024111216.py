@@ -320,26 +320,21 @@ class Robot(Robot_base):
             for y in range(-Y,Y+1):
                 if x == 0 and y == 0:
                     continue
-                self.grid_coordinates.append((x + self.coordinate[0], y + self.coordinate[1]));
-
-    #get coordinate of a node (miisie)
-    def get_robot_coords(self):
-        return self.coordinate
-    
+                self.grid_coordinates.append((x + self.coordinate[0], y + self.coordinate[1]));    
     def check_in_obstacle(self, obstacles):
         is_collision = obstacles.check_point_collision(point=self.coordinate,\
                             obstacles_line_segments=obstacles.obstacles_line_segments)
         return is_collision
     
-    # def check_in_empty_space(self):
-    #     if self.possible_actions is None:
-    #         return False
+    def check_in_empty_space(self):
+        if self.possible_actions is None:
+            return False
             
-    #     for action in self.possible_actions:
-    #         if self.coordinate == action.coords:
-    #             return False
-    #     return True
+        for action in self.possible_actions:
+            if self.coordinate == action.coords:
+                return False
+        return True
 
-    # def check_wrong_move(self, obstacles):
-    #     return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
+    def check_wrong_move(self, obstacles):
+        return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
             

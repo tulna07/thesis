@@ -121,9 +121,6 @@ if start_q_table is None:
 else:
   with open(start_q_table, "rb") as f:
     q_table = pickle.load(f)
-    
-def reinforcement_learning():
-    return
 
 def robot_main(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     # Training

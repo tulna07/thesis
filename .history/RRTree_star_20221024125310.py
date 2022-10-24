@@ -121,9 +121,6 @@ if start_q_table is None:
 else:
   with open(start_q_table, "rb") as f:
     q_table = pickle.load(f)
-    
-def reinforcement_learning():
-    return
 
 def robot_main(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     # Training
@@ -250,7 +247,7 @@ if __name__ == '__main__':
     
     
     # @Tu
-    # robot_main(start=start_cooridinate, goal=goal_coordinate, obstacles=obstacles, vision_range=5, Tree=RRT_star)
+    robot_main(start=start_cooridinate, goal=goal_coordinate, obstacles=obstacles, vision_range=5, Tree=RRT_star)
     RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate, plotter=plotter, obstacles=obstacles)
     plotter.show()
 
