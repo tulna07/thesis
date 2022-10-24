@@ -191,7 +191,7 @@ def robot_main(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             print("len path to goal", len(Tree.path_to_goal), start)
             with open("qtable.pickle", "wb") as f:
                 pickle.dump(q_table, f)
-                return
+            return
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
