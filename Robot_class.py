@@ -330,6 +330,23 @@ class Robot(Robot_base):
         is_collision = obstacles.check_point_collision(point=self.coordinate,\
                             obstacles_line_segments=obstacles.obstacles_line_segments)
         return is_collision
+
+    # check neighbour nodes in obstacles at current position 
+    def scan_obstacles(self, nodes, obstacles):
+        if nodes is None:
+            return []
+
+        obstacle_nodes = []
+
+        for node in nodes:
+            collision = obstacles.check_point_collision(point=node.coords,\
+                            obstacles_line_segments=obstacles.obstacles_line_segments)
+            if collision:
+                obstacle_nodes.append(node)
+                node.set_inactive()
+            else:
+                node.set_visited()
+        return obstacle_nodes
     
     # def check_in_empty_space(self):
     #     if self.possible_actions is None:
