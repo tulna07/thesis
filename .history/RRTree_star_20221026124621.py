@@ -206,7 +206,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     episode_rewards = []
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
-    n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -225,8 +224,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
-        n_episode += 1
+        print("len path to goal", len(Tree.path_to_goal), start)
         handle_q_table(save_q_table, q_table)
         
 

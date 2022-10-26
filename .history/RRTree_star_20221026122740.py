@@ -116,11 +116,11 @@ epsilon = 1
 
 
 
-def handle_q_table(save=Boolean, save_q_table={}):
+def handle_q_table(save=Boolean):
     #save q_table
     if save:
         with open("qtable.pickle", "wb") as f:
-            pickle.dump(save_q_table, f)
+            pickle.dump(q_table, f)
         return
 
     # initialize the q-table#
@@ -203,10 +203,10 @@ def reach_goal(goal, robot=Robot):
     return False
 
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    # epsilon = 1
     episode_rewards = []
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
-    n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -225,15 +225,12 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
-        n_episode += 1
-        handle_q_table(save_q_table, q_table)
+        print("len path to goal", len(Tree.path_to_goal), start)
+        handle_q_table(save_q_table)
         
-
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
-        global epsilon 
         epsilon *= EPS_DECAY
         
 if __name__ == '__main__':

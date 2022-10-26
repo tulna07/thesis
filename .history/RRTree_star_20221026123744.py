@@ -133,7 +133,7 @@ def handle_q_table(save=Boolean, save_q_table={}):
     return q_table
     
     
-def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
+def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table, epsilon):
     robot_state = robot.get_robot_coords()
             
     if not robot_state in q_table:
@@ -206,7 +206,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     episode_rewards = []
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
-    n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -221,19 +220,16 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             if reach_goal(goal, robot):
                 break
            
-            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
+            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table, epsilon)
             # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
-        n_episode += 1
+        print("len path to goal", len(Tree.path_to_goal), start)
         handle_q_table(save_q_table, q_table)
         
-
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
-        global epsilon 
         epsilon *= EPS_DECAY
         
 if __name__ == '__main__':

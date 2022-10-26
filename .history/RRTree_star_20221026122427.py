@@ -116,11 +116,11 @@ epsilon = 1
 
 
 
-def handle_q_table(save=Boolean, save_q_table={}):
+def q_table(save=Boolean):
     #save q_table
     if save:
         with open("qtable.pickle", "wb") as f:
-            pickle.dump(save_q_table, f)
+            pickle.dump(q_table, f)
         return
 
     # initialize the q-table#
@@ -175,7 +175,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
         q_table[robot_state][robot_action] = new_q
         
-def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
+def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
     # Get robot path from current node to goal based on RRT*
     Tree.path_to_goal = Tree.path_to_root(robot_current_node)
@@ -203,10 +203,10 @@ def reach_goal(goal, robot=Robot):
     return False
 
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    # epsilon = 1
     episode_rewards = []
     save_q_table = True
-    q_table = handle_q_table(not save_q_table)
-    n_episode = 1
+    q_table = q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -215,7 +215,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         path_to_goal = []
 
         while True:
-            run_by_rrtstar(robot, Tree, path_to_goal, vision_range)
+            run_by_rrtstar(robot, Tree, path_to_goal)
 
             # reach goal
             if reach_goal(goal, robot):
@@ -225,15 +225,12 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
-        n_episode += 1
-        handle_q_table(save_q_table, q_table)
+        print("len path to goal", len(Tree.path_to_goal), start)
+        q_table(save_q_table)
         
-
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
-        global epsilon 
         epsilon *= EPS_DECAY
         
 if __name__ == '__main__':
