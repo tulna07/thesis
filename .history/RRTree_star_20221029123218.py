@@ -136,14 +136,13 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     reward = 0
     current_node_degree = len(Tree.path_to_root(current_node)) - 1
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree
-    # if next_node.checkin:
-    #     reward = -100
-    if degree >= 1: # next node belongs to parent degree of current node
+    if next_node.checkin:
+        reward = -100
+    elif current_node_degree > next_node_degree:
         reward = 10
-    elif degree <= -1: # next node belongs to children degree of current node
+    elif current_node_degree < next_node_degree:
         reward = -10
-    elif degree == 0: # next node has the same degree of current node
+    elif current_node_degree == next_node_degree:
         reward = 5            
     return reward   
     

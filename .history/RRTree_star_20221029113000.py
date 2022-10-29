@@ -131,28 +131,13 @@ def handle_q_table(save=Boolean, save_q_table={}):
     except:
         q_table = {}
     return q_table
-
-def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
-    reward = 0
-    current_node_degree = len(Tree.path_to_root(current_node)) - 1
-    next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree
-    # if next_node.checkin:
-    #     reward = -100
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward = 10
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward = -10
-    elif degree == 0: # next node has the same degree of current node
-        reward = 5            
-    return reward   
+    
     
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
     robot_action = 0 
     robot_action_idx = 0
     
-    robot_state = robot.get_robot_coords()
-    current_node = Tree.get_node_by_coords(robot_state)       
+    robot_state = robot.get_robot_coords()       
     neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
             
@@ -182,15 +167,12 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # Take the action!
     robot.action(robot_action)              
     robot.is_reach_goal(goal)
-    robot_next_state = robot.get_robot_coords()
-    next_node = Tree.get_node_by_coords(robot_next_state)
     if robot.reach_goal:
         reward = GOAL_REWARD
     else:
-        reward = evaluate_reward(Tree, current_node, next_node)
+        reward = MOVE_PENALTY
     
-    next_node.set_checkin() #checkin node
-    
+    robot_next_state = robot.get_robot_coords()
     next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
     next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
     if not robot_next_state in q_table:
@@ -210,8 +192,8 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     
     # Move along RRT* path until seeing obstacles
     for node in Tree.path_to_goal:
-        node.set_checkin()  # checkin node that already go through
         robot.coordinate = node.coords
+        node.set_checkin()  # checkin node that already go through
         # visualize
         path_to_goal.append(node)
 
@@ -233,7 +215,7 @@ def reach_goal(goal, robot=Robot):
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     episode_rewards = []
     save_q_table = True
-    q_table = handle_q_table(not save_q_table)
+    q_table = {}
     n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
