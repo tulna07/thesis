@@ -143,10 +143,10 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 
     robot_action = 0
-    highest_q_value_idx = np.argmax(q_table[robot_state])
-
+    
     #take move base on highest q-value
     if np.random.random() > epsilon: 
+        highest_q_value_idx = np.argmax(q_table[robot_state])
         for idx in range(len(robot.grid_coordinates)):
             if visited_neighbor_nodes[highest_q_value_idx].coords == robot.grid_coordinates[idx]:
                 robot_action = idx
@@ -176,13 +176,13 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     if not robot_next_state in q_table:
         q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
     max_future_q = np.max(q_table[robot_next_state])
-    current_q = q_table[robot_state][highest_q_value_idx]
+    current_q = q_table[robot_state][robot_action]
 
     if reward == GOAL_REWARD:
         new_q = GOAL_REWARD
     else:
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-        q_table[robot_state][highest_q_value_idx] = new_q
+        q_table[robot_state][robot_action] = new_q
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())

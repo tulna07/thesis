@@ -147,7 +147,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
 
     #take move base on highest q-value
     if np.random.random() > epsilon: 
-        for idx in range(len(robot.grid_coordinates)):
+        for idx in range(len(robot.grid_coordinates)-1):
             if visited_neighbor_nodes[highest_q_value_idx].coords == robot.grid_coordinates[idx]:
                 robot_action = idx
                 break
@@ -155,7 +155,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # take random move
     else:
         if visited_neighbor_nodes:
-            chosen_neighbor_index = np.random.randint(len(visited_neighbor_nodes))
+            chosen_neighbor_index = np.random.randint(len(visited_neighbor_nodes)-1)
             for idx in range(len(robot.grid_coordinates)):
                 if visited_neighbor_nodes[chosen_neighbor_index].coords == robot.grid_coordinates[idx]:
                     robot_action = idx
