@@ -16,17 +16,17 @@ def menu_RRT():
     
     # draw the tree
     
-    # parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=30.0)
-    # parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=94.0)
-    # parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=85.0)
-    # parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=20.0)
+    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=30.0)
+    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=94.0)
+    parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=85.0)
+    parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=20.0)
     
-    # training
+    # running
     
-    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=85.0)
-    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=20.0)
-    parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=30.0)
-    parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=94.0)
+    # parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=85.0)
+    # parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=20.0)
+    # parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=30.0)
+    # parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=94.0)
     
     
     args = parser.parse_args()

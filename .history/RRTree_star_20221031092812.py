@@ -267,7 +267,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
 if __name__ == '__main__':
     
     # read tree from rrt_star.pickle
-    
     with open('rrt_star.pickle', 'rb') as f: 
         RRT_star = pickle.load(f)
     
@@ -305,16 +304,16 @@ if __name__ == '__main__':
     '''
         build tree
     '''
-    # start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
-    # RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=5, 
-    #                 random_area=random_area, sample_size=sample_size)
-    # RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
+    start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
+    RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=5, 
+                    random_area=random_area, sample_size=sample_size)
+    RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
     
     ''' 
         save the tree
     '''
-    # with open('rrt_star.pickle', 'wb') as f:
-    #     pickle.dump(RRT_star, f)
+    with open('rrt_star.pickle', 'wb') as f:
+        pickle.dump(RRT_star, f)
     
     
     '''
@@ -326,9 +325,9 @@ if __name__ == '__main__':
     ''' 
         train the robot , use the sample tree
     '''
-    train(start=start_cooridinate, goal=goal_coordinate,\
-          obstacles=obstacles, vision_range=5,\
-          Tree=RRT_star)
+    # train(start=start_cooridinate, goal=goal_coordinate,\
+    #       obstacles=obstacles, vision_range=5,\
+    #       Tree=RRT_star)
 
     ''' 
         draw the result: obstacles + RRT* + robot path 
