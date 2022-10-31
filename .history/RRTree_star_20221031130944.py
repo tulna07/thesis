@@ -132,7 +132,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
     if next_node.checkin:
-        reward -= 500
+        reward -= 1000
     if degree >= 1: # next node belongs to parent degree of current node
         reward += degree*10
     elif degree <= -1: # next node belongs to children degree of current node
@@ -204,7 +204,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
         q_table[robot_state][robot_action_idx] = new_q
     
-    return action_take , reward   
+    return action_take    
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
@@ -237,7 +237,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
-        episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
         
         # path to goal each episode
@@ -250,11 +249,11 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             if reach_goal(goal, robot):
                 break
            
-            action_take, reward  = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
-            episode_reward += reward
+            action_take  = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
+            # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)
+        print("len path to goal:", len(Tree.path_to_goal) , ", episode:", episode+1 , ", action:", action_take)
         handle_q_table(save_q_table, q_table)
         
         return

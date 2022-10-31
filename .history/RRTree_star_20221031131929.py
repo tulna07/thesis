@@ -132,7 +132,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
     if next_node.checkin:
-        reward -= 500
+        reward -= 1000
     if degree >= 1: # next node belongs to parent degree of current node
         reward += degree*10
     elif degree <= -1: # next node belongs to children degree of current node
@@ -156,8 +156,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
 
     #take move base on highest q-value
     random_number = np.random.random() 
-    # if random_number > epsilon: 
-    if True:
+    if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -257,7 +257,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)
         handle_q_table(save_q_table, q_table)
         
-        return
+        # return
         
         global epsilon 
         epsilon *= EPS_DECAY

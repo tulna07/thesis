@@ -75,7 +75,8 @@ class RRTree_star(RRTree):
                 self.total_goal_cost = goal_node.cost
 
             ''' for display '''
-            if i == self.sampling_size - 1:
+            # if i == self.sampling_size - 1:
+            if show_animation:
                 plotter.build_tree_animation(num_iter= i, Tree= self, obstacles=obstacles,  goal_coords=goal_coordinate, \
                     start_coords=self.root.coords, rand_coordinate= rand_coordinate, rand_node=new_node, 
                     neighbour_nodes=neighbour_nodes, nearest_neighbour_node=nearest_neighbour_node, color_tree=TreeColor.by_cost)
@@ -102,11 +103,17 @@ class RRTree_star(RRTree):
 
 # @ Tu
 HM_EPISODES = 5000
+
+MOVE_PENALTY = 1
+WRONG_MOVE_PENALTY = 300 # Robot run into obstacles or in empty space
 GOAL_REWARD = 1000
+
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
+SHOW_EVERY = 3000  # how often to play through env visually.
+
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-epsilon = 0.9
+epsilon = 1
 
 
 
@@ -132,19 +139,18 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
     if next_node.checkin:
-        reward -= 500
+        reward -= 1000
     if degree >= 1: # next node belongs to parent degree of current node
         reward += degree*10
     elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*10
+        reward -= degree*10
     elif degree == 0: # next node has the same degree of current node
-        reward += 5            
+        reward = 5            
     return reward   
     
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
     robot_action = 0 
     robot_action_idx = 0
-    action_take = ""
     
     robot_state = robot.get_robot_coords()
     current_node = Tree.get_node_by_coords(robot_state)       
@@ -156,9 +162,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
 
     #take move base on highest q-value
     random_number = np.random.random() 
-    # if random_number > epsilon: 
-    if True:
-        action_take = "q_value"
+    if random_number > epsilon: 
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -167,19 +171,15 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
                 break
         
     # take random move
-    
     else:
-        action_take = "random"
         if visited_neighbor_nodes:
             robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
             for idx in range(len(robot.grid_coordinates)):
                 if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:
                     robot_action = idx
                     break
-        # else:
-        #     return   
-        
-             
+        else:
+            return        
     # Take the action!
     robot.action(robot_action)              
     robot.is_reach_goal(goal)
@@ -203,8 +203,6 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     else:
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
         q_table[robot_state][robot_action_idx] = new_q
-    
-    return action_take , reward   
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
@@ -234,8 +232,10 @@ def reach_goal(goal, robot=Robot):
     return False
 
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    episode_rewards = []
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
+    n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -250,15 +250,18 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             if reach_goal(goal, robot):
                 break
            
-            action_take, reward  = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
-            episode_reward += reward
+            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
+            # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)
+        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
+        n_episode += 1
         handle_q_table(save_q_table, q_table)
         
-        return
-        
+
+        if episode % 100 == 0:
+            print(episode_reward)
+        episode_rewards.append(episode_reward)
         global epsilon 
         epsilon *= EPS_DECAY
         

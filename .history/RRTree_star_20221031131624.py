@@ -132,7 +132,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
     if next_node.checkin:
-        reward -= 500
+        reward -= 1000
     if degree >= 1: # next node belongs to parent degree of current node
         reward += degree*10
     elif degree <= -1: # next node belongs to children degree of current node
@@ -234,10 +234,10 @@ def reach_goal(goal, robot=Robot):
     return False
 
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    episode_reward = 0
     save_q_table = True
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
-        episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
         
         # path to goal each episode

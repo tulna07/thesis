@@ -156,8 +156,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
 
     #take move base on highest q-value
     random_number = np.random.random() 
-    # if random_number > epsilon: 
-    if True:
+    if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -257,7 +257,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)
         handle_q_table(save_q_table, q_table)
         
-        return
+        # return
         
         global epsilon 
         epsilon *= EPS_DECAY
