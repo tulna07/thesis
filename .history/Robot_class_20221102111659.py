@@ -359,23 +359,35 @@ class Robot(Robot_base):
         return False
     
     # check neighbour nodes in obstacles at current position 
-    def scan_obstacles(self, current_coords, neighbor_nodes, obstacles, path_to_goal):
-        if neighbor_nodes is None:
+    def scan_obstacles(self, current_coords, nodes, obstacles, path_to_goal):
+        if nodes is None:
             return []
         
-        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
+        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, nodes)
         rrt_star_path_in_neighbours.insert(0, current_coords)
         line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
         return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
+        # obstacle_nodes = []
+
+        # for node in nodes:
+        #     collision = obstacles.check_point_collision(point=node.coords,\
+        #                     obstacles_line_segments=obstacles.obstacles_line_segments)
+        #     if collision:
+        #         obstacle_nodes.append(node)
+        #         node.set_inactive()
+        #     else:
+        #         node.set_visited()
+        # return obstacle_nodes
     
-    ''' check line segments between current node and its neighbors collide obstacles '''
-    def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):
-        temp_filter=[]
-        for obstacle in obstacles.obstacles_line_segments:
-            for obstracle_ls in obstacle:
-                for idx in range(len(line_segments)):
-                    pt_is = line_across(obstracle_ls, line_segments[idx])
-                    if not pt_is:
-                        temp_filter.append(visited_neighbor_nodes[idx]) 
-        return temp_filter
-   
+    # def check_in_empty_space(self):
+    #     if self.possible_actions is None:
+    #         return False
+            
+    #     for action in self.possible_actions:
+    #         if self.coordinate == action.coords:
+    #             return False
+    #     return True
+
+    # def check_wrong_move(self, obstacles):
+    #     return self.check_in_obstacle(obstacles) or self.check_in_empty_space()
+            

@@ -281,7 +281,7 @@ def reset_node_checkin(Tree = Tree):
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    highest_episode_reward = -1000000
+    highest_episode_reward = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0

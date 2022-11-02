@@ -168,7 +168,19 @@ def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neigh
     for node in visited_neighbor_nodes:
         line_segments.append([current_node.coords,node.coords])
     temp_filter = robot.check_neighbor_nodes_path(line_segments,obstacles,visited_neighbor_nodes)
+    return temp_filter
+
+def filter_visited_neighbor_nodes_path(robot=Robot, Tree = Tree, visited_neighbor_nodes = [],obstacles = Obstacles, vision_range = int):
+    temp_filter = visited_neighbor_nodes.copy()
+    for node in visited_neighbor_nodes:
+        check = False        
+        neighbor_nodes = Tree.neighbour_nodes(node.coords,vision_range)
+        path_to_goal = Tree.path_to_root(node)
+        check = robot.scan_obstacles(node.coords,neighbor_nodes,obstacles,path_to_goal)
+        if check:
+            temp_filter.remove(node)
     return temp_filter     
+        
     
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
     robot_action = 0 
@@ -183,14 +195,16 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
+    # filter feasible neighbor nodes to move rrt*
+    # visited_neighbor_nodes =  filter_visited_neighbor_nodes_path(robot, Tree, visited_neighbor_nodes, obstacles, vision_range)
            
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 
     #take move base on highest q-value
     random_number = np.random.random() 
-    if random_number > epsilon: 
-    # if True:
+    # if random_number > epsilon: 
+    if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -232,16 +246,18 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
     # filter neighbor nodes path
     next_visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,next_node,next_visited_neighbor_nodes,obstacles)
+    # filter feasible neighbor nodes to move rrt*
+    # next_visited_neighbor_nodes =  filter_visited_neighbor_nodes_path(robot, Tree, next_neighbor_nodes, obstacles, vision_range) 
     
-    if not robot_next_state in q_table:
-        q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
-    max_future_q = np.max(q_table[robot_next_state])
-    current_q = np.max(q_table[robot_state][robot_action_idx])
-    if reward == GOAL_REWARD:
-        new_q = GOAL_REWARD
-    else:
-        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-        q_table[robot_state][robot_action_idx] = new_q
+    # if not robot_next_state in q_table:
+    #     q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
+    # max_future_q = np.max(q_table[robot_next_state])
+    # current_q = np.max(q_table[robot_state][robot_action_idx])
+    # if reward == GOAL_REWARD:
+    #     new_q = GOAL_REWARD
+    # else:
+    #     new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+    #     q_table[robot_state][robot_action_idx] = new_q
     
     return action_take , reward 
 
@@ -281,7 +297,7 @@ def reset_node_checkin(Tree = Tree):
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    highest_episode_reward = -1000000
+    highest_episode_reward = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0

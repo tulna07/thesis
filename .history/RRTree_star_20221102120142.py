@@ -162,13 +162,13 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
         reward -= 10                    
     return reward   
 
-def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neighbor_nodes= [], obstacles= Obstacles):
-    temp_filter =[]
-    line_segments = []
+def filter_visited_neighbor_nodes(robot=Robot, Tree = Tree, visited_neighbor_nodes = [],obstacles = Obstacles, vision_range = int):
     for node in visited_neighbor_nodes:
-        line_segments.append([current_node.coords,node.coords])
-    temp_filter = robot.check_neighbor_nodes_path(line_segments,obstacles,visited_neighbor_nodes)
-    return temp_filter     
+        neighbor_nodes = Tree.neighbour_nodes(node.coords,vision_range)
+        path_to_goal = Tree.path_to_root(node)
+        check = robot.scan_obstacles(node.coords,neighbor_nodes,obstacles,path_to_goal)
+        if check:
+            
     
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
     robot_action = 0 
@@ -178,12 +178,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     robot_state = robot.get_robot_coords()
     current_node = Tree.get_node_by_coords(robot_state)       
     neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
-    
-    # filter neighbor nodes that is inside obstacles
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
-    # filter neighbor nodes path
-    visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
-           
+            
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 
@@ -228,11 +224,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # update q table 
     
     next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
-    # filter neighbor nodes that is inside obstacles
     next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
-    # filter neighbor nodes path
-    next_visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,next_node,next_visited_neighbor_nodes,obstacles)
-    
     if not robot_next_state in q_table:
         q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
     max_future_q = np.max(q_table[robot_next_state])
@@ -281,7 +273,7 @@ def reset_node_checkin(Tree = Tree):
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    highest_episode_reward = -1000000
+    highest_episode_reward = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0

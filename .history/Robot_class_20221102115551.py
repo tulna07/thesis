@@ -368,14 +368,5 @@ class Robot(Robot_base):
         line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
         return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
     
-    ''' check line segments between current node and its neighbors collide obstacles '''
-    def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):
-        temp_filter=[]
-        for obstacle in obstacles.obstacles_line_segments:
-            for obstracle_ls in obstacle:
-                for idx in range(len(line_segments)):
-                    pt_is = line_across(obstracle_ls, line_segments[idx])
-                    if not pt_is:
-                        temp_filter.append(visited_neighbor_nodes[idx]) 
-        return temp_filter
+    
    
