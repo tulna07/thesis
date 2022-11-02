@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -142,8 +142,8 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
     distance = distance_compare(Tree,current_node,next_node)
     
     # first condition
-    if next_node.checkin:
-        reward -= 500
+    # if next_node.checkin:
+    #     reward -= 500
         
     # second condition        
     if degree >= 1: # next node belongs to parent degree of current node
@@ -211,27 +211,21 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     next_node.set_checkin() #checkin node
     
-    # update q table 
+    next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
+    next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
     
-    # next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
-    # next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
-    # if not robot_next_state in q_table:
-    #     q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
-    # max_future_q = np.max(q_table[robot_next_state])
-    # current_q = np.max(q_table[robot_state][robot_action_idx])
-    # if reward == GOAL_REWARD:
-    #     new_q = GOAL_REWARD
-    # else:
-    #     new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-    #     q_table[robot_state][robot_action_idx] = new_q
+    # update q table 
+    if not robot_next_state in q_table:
+        q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
+    max_future_q = np.max(q_table[robot_next_state])
+    current_q = np.max(q_table[robot_state][robot_action_idx])
+    if reward == GOAL_REWARD:
+        new_q = GOAL_REWARD
+    else:
+        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+        q_table[robot_state][robot_action_idx] = new_q
     
     return action_take , reward 
-
-def print_highest_reward(highest_episode_reward,episode_reward):
-    if (episode_reward > highest_episode_reward):  
-        highest_episode_reward = episode_reward
-    print("highest episode reward:" , highest_episode_reward)    
-    return highest_episode_reward
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
@@ -253,18 +247,15 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
 
 def reach_goal(goal, robot=Robot):
     if robot.coordinate == goal:
-        # print("reach goal")
+        print("reach goal")
         return True
+    # else :
+    #     print("not reach goal yet")
+
     return False
 
-def reset_node_checkin(Tree = Tree):
-    nodes = Tree.all_nodes()
-    for node in nodes:
-        node.checkin = False
-        
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    highest_episode_reward = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0
@@ -286,10 +277,8 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             
         Tree.path_to_goal = path_to_goal
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
-        highest_episode_reward = print_highest_reward(highest_episode_reward,episode_reward)
-        reset_node_checkin(Tree)
         
-        return
+        # return
         
         global epsilon 
         epsilon *= EPS_DECAY

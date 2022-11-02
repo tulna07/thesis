@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -288,7 +288,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
         highest_episode_reward = print_highest_reward(highest_episode_reward,episode_reward)
         reset_node_checkin(Tree)
-        
         return
         
         global epsilon 

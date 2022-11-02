@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -132,6 +132,8 @@ def distance_compare(Tree = Tree, node_1 = Node, node_2 = Node):
     distance_node_2 = point_dist(root_coord, node_2.coords)
     distance = distance_node_1 - distance_node_2
     return distance
+
+    
     
 
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
@@ -211,27 +213,21 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     next_node.set_checkin() #checkin node
     
+    next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
+    next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
+    
     # update q table 
+    if not robot_next_state in q_table:
+        q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
+    max_future_q = np.max(q_table[robot_next_state])
+    current_q = np.max(q_table[robot_state][robot_action_idx])
+    if reward == GOAL_REWARD:
+        new_q = GOAL_REWARD
+    else:
+        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+        q_table[robot_state][robot_action_idx] = new_q
     
-    # next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
-    # next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
-    # if not robot_next_state in q_table:
-    #     q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
-    # max_future_q = np.max(q_table[robot_next_state])
-    # current_q = np.max(q_table[robot_state][robot_action_idx])
-    # if reward == GOAL_REWARD:
-    #     new_q = GOAL_REWARD
-    # else:
-    #     new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-    #     q_table[robot_state][robot_action_idx] = new_q
-    
-    return action_take , reward 
-
-def print_highest_reward(highest_episode_reward,episode_reward):
-    if (episode_reward > highest_episode_reward):  
-        highest_episode_reward = episode_reward
-    print("highest episode reward:" , highest_episode_reward)    
-    return highest_episode_reward
+    return action_take , reward , q_table 
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
@@ -253,18 +249,15 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
 
 def reach_goal(goal, robot=Robot):
     if robot.coordinate == goal:
-        # print("reach goal")
+        print("reach goal")
         return True
+    # else :
+    #     print("not reach goal yet")
+
     return False
 
-def reset_node_checkin(Tree = Tree):
-    nodes = Tree.all_nodes()
-    for node in nodes:
-        node.checkin = False
-        
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    highest_episode_reward = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0
@@ -280,14 +273,12 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             if reach_goal(goal, robot):
                 break
            
-            action_take, reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
-            handle_q_table(save_q_table, q_table)
+            action_take, reward , q_table_update = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
+            # handle_q_table(save_q_table, q_table_update)
             episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
-        highest_episode_reward = print_highest_reward(highest_episode_reward,episode_reward)
-        reset_node_checkin(Tree)
         
         return
         

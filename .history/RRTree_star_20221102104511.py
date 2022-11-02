@@ -288,7 +288,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
         highest_episode_reward = print_highest_reward(highest_episode_reward,episode_reward)
         reset_node_checkin(Tree)
-        
         return
         
         global epsilon 
