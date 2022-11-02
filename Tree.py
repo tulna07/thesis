@@ -23,6 +23,7 @@ class Node:
         self.neighbours = []        # node's neighbours (for RTTx)
         self.neighbours_weight = [] # node's neighbours weight (for RRTx)
         self.visited = False        # status of visitting
+        self.checkin = False        # status of checkin
      
     ''' set lmc '''
     def set_lmc(self, x):
@@ -46,6 +47,10 @@ class Node:
     def set_visited(self):
         self.visited = True
 
+    ''' set checkin node '''
+    def set_checkin(self):
+        self.checkin = True
+    
     ''' set inactive node '''
     def set_inactive(self):
         self.active = False

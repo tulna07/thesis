@@ -331,22 +331,42 @@ class Robot(Robot_base):
                             obstacles_line_segments=obstacles.obstacles_line_segments)
         return is_collision
 
-    # check neighbour nodes in obstacles at current position 
-    def scan_obstacles(self, nodes, obstacles):
+    def get_rrt_star_path_in_neighbours(self, path_to_goal, neighbour_nodes):
+        rrt_star_path_in_neighbours = []
+        for step in path_to_goal:
+            for node in neighbour_nodes:
+                if step.coords == node.coords:
+                    rrt_star_path_in_neighbours.append(step.coords)
+        return rrt_star_path_in_neighbours
+    
+    ''' serialize obstacle in to list of linesegments'''
+    def get_line_segments(self, path):
+        line_segments = []
+        for i in range (len(path) - 1):
+            line_segments.append( [path[i], path[i+1]] ) 
+
+        return line_segments
+
+    ''' check rrt* path in vision range collides obstacles '''
+    def check_path_collides_obstacles(self, path_line_segments, obstacles_line_segments):
+        for obstracle_lss in obstacles_line_segments:
+            for ls in obstracle_lss:
+                for path_ls in path_line_segments:
+                    pt_is = line_across(ls, path_ls)
+                    if pt_is:
+                        return True
+        return False
+
+
+    ''' check neighbour nodes in obstacles at current position ''' 
+    def scan_obstacles(self, current_coords, nodes, obstacles, path_to_goal):
         if nodes is None:
             return []
 
-        obstacle_nodes = []
-
-        for node in nodes:
-            collision = obstacles.check_point_collision(point=node.coords,\
-                            obstacles_line_segments=obstacles.obstacles_line_segments)
-            if collision:
-                obstacle_nodes.append(node)
-                node.set_inactive()
-            else:
-                node.set_visited()
-        return obstacle_nodes
+        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, nodes)
+        rrt_star_path_in_neighbours.insert(0, current_coords)
+        line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
+        return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
     
     # def check_in_empty_space(self):
     #     if self.possible_actions is None:

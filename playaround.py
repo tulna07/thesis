@@ -220,4 +220,25 @@ import matplotlib.pyplot as plt
 #     my_dict[sen] = 1
 # print(my_dict)
 
-print([np.random.uniform(-5, 0) for i in range(4)])
+def get_q_table():
+    # q_table = {}
+
+    # if init_q_table:
+    #     return q_table
+
+    try:
+      with open("q_table.pickle", "rb") as f:
+          q_table = pickle.load(f)
+      print(q_table)
+    except:
+      q_table = {}
+      print("no q table")
+    
+    # if q_table:
+    #     print(q_table)
+    # else:
+    #     print("No q_table")
+
+    return q_table
+
+get_q_table()

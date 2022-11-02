@@ -1,3 +1,4 @@
+from xmlrpc.client import Boolean
 import numpy as np
 
 from Tree import Tree, Node
@@ -100,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 40000
+HM_EPISODES = 1000
 
 MOVE_PENALTY = 1
 WRONG_MOVE_PENALTY = 300 # Robot run into obstacles or in empty space
@@ -114,62 +115,128 @@ DISCOUNT = 0.95
 epsilon = 1
 
 
-start_q_table = None
 
-if start_q_table is None:
-  # initialize the q-table#
-  q_table = {}
-else:
-  with open(start_q_table, "rb") as f:
-    q_table = pickle.load(f)
+def handle_q_table(save=Boolean, save_q_table={}):
+    #save q_table
+    if save:
+        with open("qtable.pickle", "wb") as f:
+            pickle.dump(save_q_table, f)
+        return
+
+    # initialize the q-table#
+    q_table = {}
+    try:
+        with open("qtable.pickle", "rb") as f:
+            q_table = pickle.load(f)
+    except:
+        q_table = {}
+    return q_table
+
+def evaluate_reward(goal, Tree = Tree, current_node = Node, next_node = Node):
+    # reward = 0
+    # current_node_degree = len(Tree.path_to_root(current_node)) - 1
+    # next_node_degree = len(Tree.path_to_root(next_node)) - 1
+    # degree = current_node_degree - next_node_degree
+    # # if next_node.checkin:
+    # #     reward = -100
+    # if degree >= 1: # next node belongs to parent degree of current node
+    #     reward = 10*degree
+    # elif degree <= -1: # next node belongs to children degree of current node
+    #     reward = -20
+    # elif degree == 0: # next node has the same degree of current node
+    #     reward = 0
+    reward = -abs(goal[1] - next_node.coords[1])
+    return reward   
     
-def reinforcement_learning(goal, vision_range, robot, Tree, obstacles):
+def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
+    robot_action = 0 
+    robot_action_idx = 0
+    
     robot_state = robot.get_robot_coords()
+    current_node = Tree.get_node_by_coords(robot_state)       
+    neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
+    visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
             
     if not robot_state in q_table:
-        q_table[robot_state] = [0 for i in range(80)]
+        q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 
-    robot_action = 0
-    if np.random.random() > epsilon:
-        # GET THE ACTION
-        robot_action = np.argmax(q_table[robot_state])
+    #take move base on highest q-value
+    random_number = np.random.random() 
+    if random_number > epsilon: 
+        robot_action_idx = np.argmax(q_table[robot_state])
+        chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
+        for idx in range(len(robot.grid_coordinates)):
+            if chosen_node_coords == robot.grid_coordinates[idx]:
+                robot_action = idx
+                break
+        
+    # take random move
     else:
-        neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
-        visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
         if visited_neighbor_nodes:
-            chosen_neighbor_index = np.random.randint(0, len(visited_neighbor_nodes) - 1)
+            robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
             for idx in range(len(robot.grid_coordinates)):
-                if visited_neighbor_nodes[chosen_neighbor_index].coords == robot.grid_coordinates[idx]:
+                if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:
                     robot_action = idx
                     break
         else:
             return        
-                
-
     # Take the action!
-    robot.action(robot_action)
-            
+    robot.action(robot_action)              
     robot.is_reach_goal(goal)
+    robot_next_state = robot.get_robot_coords()
+    next_node = Tree.get_node_by_coords(robot_next_state)
     if robot.reach_goal:
         reward = GOAL_REWARD
     else:
-        reward = MOVE_PENALTY
+        reward = evaluate_reward(goal, Tree, current_node, next_node)
     
-    robot_next_state = robot.get_robot_coords()
+    next_node.set_checkin() #checkin node
+    
+    next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
+    next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
     if not robot_next_state in q_table:
-        q_table[robot_next_state] = [0 for i in range(80)]
+        q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
     max_future_q = np.max(q_table[robot_next_state])
-    current_q = q_table[robot_next_state][robot_action]
-
+    current_q = np.max(q_table[robot_state][robot_action_idx])
     if reward == GOAL_REWARD:
         new_q = GOAL_REWARD
     else:
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-        q_table[robot_state][robot_action] = new_q
+        q_table[robot_state][robot_action_idx] = new_q
+        
+def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
+    robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
+    # Get robot path from current node to goal based on RRT*
+    Tree.path_to_goal = Tree.path_to_root(robot_current_node)
+    
+    # Move along RRT* path until seeing obstacles
+    for node in Tree.path_to_goal:
+        node.set_checkin()  # checkin node that already go through
+        robot.coordinate = node.coords
+        # visualize
+        path_to_goal.append(node)
+
+        neighbor_nodes = Tree.neighbour_nodes(robot.coordinate, vision_range)
+        is_see_obstacles = robot.scan_obstacles(robot.coordinate, neighbor_nodes, obstacles, Tree.path_to_goal)
+        if is_see_obstacles:
+            print(robot.coordinate)
+            robot.generate_grid_coordinates()
+            return     
+
+def reach_goal(goal, robot=Robot):
+    if robot.coordinate == goal:
+        print("reach goal")
+        return True
+    # else :
+    #     print("not reach goal yet")
+
+    return False
 
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
-    # epsilon = 1
     episode_rewards = []
+    save_q_table = True
+    q_table = handle_q_table(not save_q_table)
+    n_episode = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -178,41 +245,26 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         path_to_goal = []
 
         while True:
-            robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
-
-            # Get robot path from current node to goal based on RRT*
-            Tree.path_to_goal = Tree.path_to_root(robot_current_node)
-
-            # Move along RRT* path until seeing obstacles
-            for node in Tree.path_to_goal:
-                robot.coordinate = node.coords
-
-                # visualize
-                path_to_goal.append(node)
-
-                neighbor_nodes = Tree.neighbour_nodes(robot.coordinate, vision_range)
-                is_see_obstacles = robot.scan_obstacles(neighbor_nodes, obstacles)
-                if is_see_obstacles:
-                    robot.generate_grid_coordinates()
-                    break
+            run_by_rrtstar(robot, Tree, path_to_goal, vision_range)
 
             # reach goal
-            if robot.coordinate == goal:
-                print("reach goal")
+            if reach_goal(goal, robot):
                 break
            
-            reinforcement_learning(goal, vision_range, robot, Tree, obstacles)
+            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
             # episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("len path to goal", len(Tree.path_to_goal), start)
-        # with open("qtable.pickle", "wb") as f:
-        #     pickle.dump(q_table, f)
+        print("len path to goal", len(Tree.path_to_goal),"episode", n_episode)
+        n_episode += 1
+        # handle_q_table(save_q_table, q_table)
         return
+        
 
         if episode % 100 == 0:
             print(episode_reward)
         episode_rewards.append(episode_reward)
+        global epsilon 
         epsilon *= EPS_DECAY
         
 if __name__ == '__main__':
@@ -286,4 +338,3 @@ if __name__ == '__main__':
     RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
                            plotter=plotter, obstacles=obstacles)
     plotter.show()
-
