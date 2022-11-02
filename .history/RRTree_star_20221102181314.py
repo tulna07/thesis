@@ -263,7 +263,7 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
         path_to_goal.append(node)
 
         neighbor_nodes = Tree.neighbour_nodes(robot.coordinate, vision_range)
-        is_see_obstacles = robot.scan_obstacles(robot.coordinate, neighbor_nodes, obstacles, Tree.path_to_goal)
+        is_see_obstacles = robot.scan_obstacles(neighbor_nodes, obstacles, Tree.path_to_goal)
         if is_see_obstacles:
             robot.generate_grid_coordinates()
             return     

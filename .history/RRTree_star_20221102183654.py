@@ -301,7 +301,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
+        print("episode:", episode+1 , ", action:", action_take, ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
         highest_episode_reward = print_highest_reward(highest_episode_reward,episode_reward)
         reset_node_checkin(Tree)
         global epsilon 

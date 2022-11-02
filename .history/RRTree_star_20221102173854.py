@@ -181,8 +181,10 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     # filter neighbor nodes that is inside obstacles
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
+    # print("before:" ,len(visited_neighbor_nodes))
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
+    # print("after:" , len(visited_neighbor_nodes))       
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 

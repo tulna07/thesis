@@ -367,7 +367,6 @@ class Robot(Robot_base):
         rrt_star_path_in_neighbours.insert(0, current_coords)
         line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
         return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
-    
        
     ''' check line segments between current node and its neighbors collide obstacles '''
     def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):

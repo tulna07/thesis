@@ -168,6 +168,7 @@ def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neigh
     for node in visited_neighbor_nodes:
         line_segments.append([current_node.coords,node.coords])
     temp_filter = robot.check_neighbor_nodes_path(line_segments,obstacles,visited_neighbor_nodes)
+    print("temp:",len(temp_filter))
     return temp_filter     
     
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
@@ -181,15 +182,17 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     # filter neighbor nodes that is inside obstacles
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
+    print("before:" ,len(visited_neighbor_nodes))
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
+    print("after:" , len(visited_neighbor_nodes))       
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
 
     #take move base on highest q-value
     random_number = np.random.random() 
-    if random_number > epsilon: 
-    # if True:
+    # if random_number > epsilon: 
+    if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -232,15 +235,15 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # filter neighbor nodes path
     next_visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,next_node,next_visited_neighbor_nodes,obstacles)
     
-    if not robot_next_state in q_table:
-        q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
-    max_future_q = np.max(q_table[robot_next_state])
-    current_q = np.max(q_table[robot_state][robot_action_idx])
-    if reward == GOAL_REWARD:
-        new_q = GOAL_REWARD
-    else:
-        new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
-        q_table[robot_state][robot_action_idx] = new_q
+    # if not robot_next_state in q_table:
+    #     q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
+    # max_future_q = np.max(q_table[robot_next_state])
+    # current_q = np.max(q_table[robot_state][robot_action_idx])
+    # if reward == GOAL_REWARD:
+    #     new_q = GOAL_REWARD
+    # else:
+    #     new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
+    #     q_table[robot_state][robot_action_idx] = new_q
     
     return action_take , reward 
 
@@ -307,7 +310,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         global epsilon 
         epsilon *= EPS_DECAY
         
-        # return
+        return
         
 if __name__ == '__main__':
     

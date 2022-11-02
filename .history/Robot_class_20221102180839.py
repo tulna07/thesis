@@ -332,14 +332,12 @@ class Robot(Robot_base):
         return is_collision
 
 
-    def get_rrt_star_path_in_neighbours(self, path_to_goal, neighbour_nodes):
-        rrt_star_path_in_neighbours = []
-        for step in path_to_goal:
-            for node in neighbour_nodes:
-                if step.coords == node.coords:
-                    rrt_star_path_in_neighbours.append(step.coords)
-        return rrt_star_path_in_neighbours
-    
+    def check_neighbor_node_in_rrtstar(self, path_to_goal, neighbour_nodes):
+        for node in neighbour_nodes:
+            if node.coords == path_to_goal[1].coords:
+                return True
+        return False
+            
     ''' serialize obstacle in to list of linesegments'''
     def get_line_segments(self, path):
         line_segments = []
@@ -360,14 +358,15 @@ class Robot(Robot_base):
     
     # check neighbour nodes in obstacles at current position 
     def scan_obstacles(self, current_coords, neighbor_nodes, obstacles, path_to_goal):
+        line_segments =[]
         if neighbor_nodes is None:
             return []
         
-        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
-        rrt_star_path_in_neighbours.insert(0, current_coords)
-        line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
+        check = self.check_neighbor_node_in_rrtstar(path_to_goal, neighbor_nodes)
+        if check:
+            
+            line_segments.append([path_to_goal[0].coords,path_to_goal[1].coords])
         return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
-    
        
     ''' check line segments between current node and its neighbors collide obstacles '''
     def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):

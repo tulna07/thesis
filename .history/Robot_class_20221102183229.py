@@ -349,13 +349,12 @@ class Robot(Robot_base):
         return line_segments
 
     ''' check rrt* path in vision range collides obstacles '''
-    def check_path_collides_obstacles(self, path_line_segments, obstacles_line_segments):
+    def check_path_collides_obstacles(self, line_segment, obstacles_line_segments):
         for obstracle_lss in obstacles_line_segments:
             for ls in obstracle_lss:
-                for path_ls in path_line_segments:
-                    pt_is = line_across(ls, path_ls)
-                    if pt_is:
-                        return True
+                pt_is = line_across(ls, line_segment)
+                if pt_is:
+                    return True
         return False
     
     # check neighbour nodes in obstacles at current position 
@@ -363,11 +362,11 @@ class Robot(Robot_base):
         if neighbor_nodes is None:
             return []
         
-        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
-        rrt_star_path_in_neighbours.insert(0, current_coords)
-        line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
-        return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
-    
+        # rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
+        # rrt_star_path_in_neighbours.insert(0, current_coords)
+        line_segment = [path_to_goal[0].coords,path_to_goal[1].coords]
+        check = self.check_path_collides_obstacles(line_segment, obstacles.obstacles_line_segments)
+        return check
        
     ''' check line segments between current node and its neighbors collide obstacles '''
     def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):
