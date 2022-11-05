@@ -101,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 600
+HM_EPISODES = 5000
 GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
@@ -169,20 +169,15 @@ def neighbor_distance(current_node, neighbor_nodes):
         neighbor_length.append(point_dist(current_node.coords, node.coords))
     return neighbor_length
 
-def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[]):
+def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , neighbor_length=[]):
     reward = 0
-    
-    #variable to check degree between current node and next node
     current_node_degree = len(Tree.path_to_root(current_node)) - 1
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
-    
     distance = distance_compare(Tree,current_node,next_node)
     
     action_distance = point_dist(current_node.coords, next_node.coords)
-    neighbors_length_to_current = neighbor_distance(current_node, visited_neighbor_nodes)
-    neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
-    neighbors_avg_length = neighbors_length_to_current + neighbors_length_to_root
+    shortest_neighbor_distance = neighbor_length[np.argmin(neighbor_length)]
     
     # first condition
     # penalty if return to a checkin node
@@ -205,7 +200,11 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 20  
         
     # forth condition 
-   
+    # compare if action distance is the shortest one between neighbor
+    if action_distance == shortest_neighbor_distance:
+        reward += 50
+    else:
+        reward -= 10    
                           
     return reward
 
@@ -249,10 +248,13 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
+
+    neighbor_length = neighbor_distance(current_node, visited_neighbor_nodes)
     
     #take move base on highest q-value
     random_number = np.random.random() 
     if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -347,7 +349,9 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         
         global epsilon 
         epsilon *= EPS_DECAY
-                
+        
+        # return
+        
 if __name__ == '__main__':
     
     # read tree from rrt_star.pickle

@@ -353,6 +353,7 @@ class Robot(Robot_base):
         for obstracle_lss in obstacles_line_segments:
             for ls in obstracle_lss:
                 pt_is = line_across(ls, path_line_segments)
+                print("ls", path_line_segments, "obs:",ls)
                 if pt_is:
                     return True
         return False

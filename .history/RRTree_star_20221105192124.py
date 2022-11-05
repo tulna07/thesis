@@ -253,6 +253,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     #take move base on highest q-value
     random_number = np.random.random() 
     if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords

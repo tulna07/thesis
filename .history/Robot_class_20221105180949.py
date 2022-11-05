@@ -353,6 +353,7 @@ class Robot(Robot_base):
         for obstracle_lss in obstacles_line_segments:
             for ls in obstracle_lss:
                 pt_is = line_across(ls, path_line_segments)
+                print("ls", path_line_segments, "obs:",ls)
                 if pt_is:
                     return True
         return False
@@ -367,8 +368,10 @@ class Robot(Robot_base):
     #     line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
     #     return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
     
-    def check_intersection_obs(self, obstacles, node, next_node): 
-        line_segment = ([node.coords, next_node.coords])
+    def check_intersection_obs(self, obstacles, path_to_goal):
+        if  len(path_to_goal) <= 1:
+            return True   
+        line_segment = ([path_to_goal[0].coords,path_to_goal[1].coords])
         return self.check_path_collides_obstacles(line_segment,obstacles.obstacles_line_segments)
     
        

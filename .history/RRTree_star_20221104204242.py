@@ -101,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 600
+HM_EPISODES = 5000
 GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
@@ -131,58 +131,15 @@ def distance_compare(Tree = Tree, node_1 = Node, node_2 = Node):
     distance_node_1 = point_dist(root_coord, node_1.coords)
     distance_node_2 = point_dist(root_coord, node_2.coords)
     distance = distance_node_1 - distance_node_2
-    return distance   
-
-def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neighbor_nodes= [], obstacles= Obstacles):
-    temp_filter =[]
-    line_segments = []
-    for node in visited_neighbor_nodes:
-        line_segments.append([current_node.coords,node.coords])
-    temp_filter = robot.check_neighbor_nodes_path(line_segments,obstacles,visited_neighbor_nodes)
-    return temp_filter      
-
-def print_shortest_path_length(shortest_path_length,total_path_length):
-    if (shortest_path_length > total_path_length):  
-        shortest_path_length = total_path_length
-    print("shortest path length:" , shortest_path_length)    
-    return shortest_path_length
- 
-def reach_goal(goal, robot=Robot):
-    if robot.coordinate == goal:
-        return True
-    return False
-
-def reset_node_checkin(Tree = Tree):
-    nodes = Tree.all_nodes()
-    for node in nodes:
-        node.checkin = False
- 
-def path_length_rrt_star(path_to_goal):
-    total_length = 0
-    for i in range(len(path_to_goal) - 1):
-        total_length += point_dist(path_to_goal[i].coords, path_to_goal[i+1].coords)
-    return total_length    
-
-def neighbor_distance(current_node, neighbor_nodes):
-    neighbor_length = []
-    for node in neighbor_nodes:
-        neighbor_length.append(point_dist(current_node.coords, node.coords))
-    return neighbor_length
-
-def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[]):
-    reward = 0
+    return distance
     
-    #variable to check degree between current node and next node
+
+def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node):
+    reward = 0
     current_node_degree = len(Tree.path_to_root(current_node)) - 1
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
-    
     distance = distance_compare(Tree,current_node,next_node)
-    
-    action_distance = point_dist(current_node.coords, next_node.coords)
-    neighbors_length_to_current = neighbor_distance(current_node, visited_neighbor_nodes)
-    neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
-    neighbors_avg_length = neighbors_length_to_current + neighbors_length_to_root
     
     # first condition
     # penalty if return to a checkin node
@@ -200,17 +157,41 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     # third condition   
     # compare distance to goal(current vs next) 
     if distance >= 0:
-        reward += 20
+        reward += 10
     else:
-        reward -= 20  
-        
-    # forth condition 
-   
-                          
-    return reward
+        reward -= 10                    
+    return reward   
 
+def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neighbor_nodes= [], obstacles= Obstacles):
+    temp_filter =[]
+    line_segments = []
+    for node in visited_neighbor_nodes:
+        line_segments.append([current_node.coords,node.coords])
+    temp_filter = robot.check_neighbor_nodes_path(line_segments,obstacles,visited_neighbor_nodes)
+    return temp_filter      
+
+def print_highest_reward(highest_episode_reward,episode_reward):
+    if (episode_reward > highest_episode_reward):  
+        highest_episode_reward = episode_reward
+    print("highest episode reward:" , highest_episode_reward)    
+    return highest_episode_reward
+ 
+def reach_goal(goal, robot=Robot):
+    if robot.coordinate == goal:
+        return True
+    return False
+
+def reset_node_checkin(Tree = Tree):
+    nodes = Tree.all_nodes()
+    for node in nodes:
+        node.checkin = False
+ 
+def path_length_rrtstar(path_to_goal):
+    total_length = 0
+    for i in range(len(path_to_goal) - 1):
+        total_length += point_dist(path_to_goal[i].coords, path_to_goal[i+1].coords)
+    return total_length    
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
-    path_length_rrtstar = 0
     robot_current_node = Tree.get_node_by_coords(robot.get_robot_coords())
     # Get robot path from current node to goal based on RRT*
     Tree.path_to_goal = Tree.path_to_root(robot_current_node)
@@ -227,16 +208,15 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
         if is_see_obstacles:
             robot.generate_grid_coordinates()
             if len(path_to_goal) > 1:
-                path_length_rrtstar = path_length_rrt_star(path_to_goal)
-            return path_length_rrtstar  
-    path_length_rrtstar = path_length_rrt_star(path_to_goal)
-    return path_length_rrtstar       
+                total_length = path_length_rrtstar(path_to_goal)
+            return total_length  
+    total_length = path_length_rrtstar(path_to_goal)
+    return total_length       
         
-def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table):
+def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table, path_length):
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
-    path_length_rl = 0
     
     robot_state = robot.get_robot_coords()
     current_node = Tree.get_node_by_coords(robot_state)       
@@ -246,13 +226,13 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
-    
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
-    
+
     #take move base on highest q-value
     random_number = np.random.random() 
     if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -283,11 +263,9 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     if robot.reach_goal:
         reward = GOAL_REWARD
     else:
-        reward = evaluate_reward(Tree, current_node, next_node, visited_neighbor_nodes)
+        reward = evaluate_reward(Tree, current_node, next_node)
     
     next_node.set_checkin() #checkin node
-    
-    path_length_rl = point_dist(current_node.coords, next_node.coords) # cal distance from current node to next node
     
     # update q table 
     
@@ -307,14 +285,12 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
         q_table[robot_state][robot_action_idx] = new_q
     
-    return action_take , reward, path_length_rl
+    return action_take , reward
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     save_q_table = True
-    path_length_rrtstar = 0
-    path_length_rl = 0
-    total_path_length = 0
-    shortest_path_length = 1000000
+    path_length = 0
+    shortest_path_length = 0
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
         episode_reward = 0
@@ -324,30 +300,25 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         path_to_goal = []
 
         while True:
-            path_length_rrtstar += run_by_rrtstar(robot, Tree, path_to_goal, vision_range)
+            run_by_rrtstar(robot, Tree, path_to_goal, vision_range)
 
             # reach goal
             if reach_goal(goal, robot):
                 break
            
-            action_take, reward, path_length = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table)
+            action_take, reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,path_length)
             handle_q_table(save_q_table, q_table)
-            path_length_rl += path_length
             episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        total_path_length = int(path_length_rrtstar + path_length_rl)
-        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", total path length:", total_path_length)        
-        shortest_path_length = print_shortest_path_length(shortest_path_length,total_path_length)
-        
+        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", episode reward:", episode_reward)        
+        shortest_path_length = print_highest_reward(highest_episode_reward,episode_reward)
         reset_node_checkin(Tree)
-        path_length_rrtstar = 0
-        path_length_rl = 0
-        total_path_length = 0
-        
         global epsilon 
         epsilon *= EPS_DECAY
-                
+        
+        # return
+        
 if __name__ == '__main__':
     
     # read tree from rrt_star.pickle

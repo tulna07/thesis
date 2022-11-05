@@ -358,18 +358,14 @@ class Robot(Robot_base):
         return False
     
     # check neighbour nodes in obstacles at current position 
-    # def scan_obstacles(self, current_coords, neighbor_nodes, obstacles, path_to_goal):
-    #     if neighbor_nodes is None:
-    #         return []
+    def scan_obstacles(self, current_coords, neighbor_nodes, obstacles, path_to_goal):
+        if neighbor_nodes is None:
+            return []
         
-    #     rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
-    #     rrt_star_path_in_neighbours.insert(0, current_coords)
-    #     line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
-    #     return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
-    
-    def check_intersection_obs(self, obstacles, node, next_node): 
-        line_segment = ([node.coords, next_node.coords])
-        return self.check_path_collides_obstacles(line_segment,obstacles.obstacles_line_segments)
+        rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
+        rrt_star_path_in_neighbours.insert(0, current_coords)
+        line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
+        return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
     
        
     ''' check line segments between current node and its neighbors collide obstacles '''

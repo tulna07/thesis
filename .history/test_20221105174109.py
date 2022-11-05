@@ -101,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 600
+HM_EPISODES = 5000
 GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -169,6 +169,17 @@ def neighbor_distance(current_node, neighbor_nodes):
         neighbor_length.append(point_dist(current_node.coords, node.coords))
     return neighbor_length
 
+def ranking_list(list = []):
+    seq  = sorted(list)
+    index = [seq.index(v) for v in list]
+    return index
+
+def get_node_index(check_node , neighbor_nodes = []):
+    for node in range(len(neighbor_nodes)):
+        if check_node.coords == neighbor_nodes[node].coords:
+            node_idx = node
+            return node_idx
+    
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[]):
     reward = 0
     
@@ -179,10 +190,11 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     
     distance = distance_compare(Tree,current_node,next_node)
     
-    action_distance = point_dist(current_node.coords, next_node.coords)
+    next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     neighbors_length_to_current = neighbor_distance(current_node, visited_neighbor_nodes)
     neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
     neighbors_avg_length = neighbors_length_to_current + neighbors_length_to_root
+    ranking_neighbors = ranking_list(neighbors_avg_length)
     
     # first condition
     # penalty if return to a checkin node
@@ -190,22 +202,22 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 500
         
     # second condition        
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*5
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*5
-    elif degree == 0: # next node has the same degree of current node
-        reward += 3 
+    # if degree >= 1: # next node belongs to parent degree of current node
+    #     reward += degree*5
+    # elif degree <= -1: # next node belongs to children degree of current node
+    #     reward -= abs(degree)*5
+    # elif degree == 0: # next node has the same degree of current node
+    #     reward += 3 
         
     # third condition   
     # compare distance to goal(current vs next) 
-    if distance >= 0:
-        reward += 20
-    else:
-        reward -= 20  
+    # if distance >= 0:
+    #     reward += 20
+    # else:
+    #     reward -= 20  
         
     # forth condition 
-   
+    reward += (len(ranking_neighbors) - next_node_idx)*10        
                           
     return reward
 
@@ -253,6 +265,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     #take move base on highest q-value
     random_number = np.random.random() 
     if random_number > epsilon: 
+    # if True:
         action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
@@ -347,7 +360,9 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
         
         global epsilon 
         epsilon *= EPS_DECAY
-                
+        
+        # return
+        
 if __name__ == '__main__':
     
     # read tree from rrt_star.pickle
