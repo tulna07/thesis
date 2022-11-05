@@ -13,7 +13,7 @@ import pickle
 from Tree import Node, Tree
 import sys
 
-sys.setrecursionlimit(12000)
+sys.setrecursionlimit(10000)
 
 class RRTree_star(RRTree):
 
@@ -101,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 5000
+HM_EPISODES = 500
 GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
@@ -247,7 +247,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
 def print_highest_reward(highest_episode_reward,episode_reward):
     if (episode_reward > highest_episode_reward):  
         highest_episode_reward = episode_reward
-    print("highest episode reward:" , highest_episode_reward)    
+    # print("highest episode reward:" , highest_episode_reward)    
     return highest_episode_reward
         
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
@@ -256,15 +256,22 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[], vision_range=int):
     Tree.path_to_goal = Tree.path_to_root(robot_current_node)
     
     # Move along RRT* path until seeing obstacles
-    for node in Tree.path_to_goal:
+    for idx in range(len(Tree.path_to_goal)):
+        node = Tree.path_to_goal[idx]
         node.set_checkin()  # checkin node that already go through
         robot.coordinate = node.coords
         # visualize
         path_to_goal.append(node)
 
-        neighbor_nodes = Tree.neighbour_nodes(robot.coordinate, vision_range)
-        is_see_obstacles = robot.scan_obstacles(robot.coordinate, neighbor_nodes, obstacles, Tree.path_to_goal)
-        if is_see_obstacles:
+        if reach_goal(robot.goal, robot):
+             break
+
+
+        # neighbor_nodes = Tree.neighbour_nodes(robot.coordinate, vision_range)
+        # check next node is inside obstacles or not
+        next_node = Tree.path_to_goal[idx + 1]
+        inside_obstacles = robot.check_inside_obstacles(next_node, obstacles)
+        if inside_obstacles:
             robot.generate_grid_coordinates()
             return     
 
