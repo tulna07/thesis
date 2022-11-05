@@ -13,10 +13,21 @@ def menu_RRT():
     parser.add_argument('-ss', metavar="sample_size", type=int, help='sample size', default=2000)
     parser.add_argument('-radius', metavar="neighbour radius", type=float, help='radius', default=10.0)
     parser.add_argument('-r', metavar="vision range", type=float, help='vision range', default=10.0)
-    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=70.0)
-    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=60.0)
+    
+    # draw the tree
+    
+    # parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=30.0)
+    # parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=94.0)
+    # parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=85.0)
+    # parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=20.0)
+    
+    # training
+    
+    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=59.0)
+    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=62.0)
     parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=30.0)
     parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=94.0)
+    
     
     args = parser.parse_args()
 
