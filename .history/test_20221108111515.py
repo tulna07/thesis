@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -190,19 +190,19 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 500
         
     # second condition        
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*10
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*10
-    elif degree == 0: # next node has the same degree of current node
-        reward += 5 
+    # if degree >= 1: # next node belongs to parent degree of current node
+    #     reward += degree*10
+    # elif degree <= -1: # next node belongs to children degree of current node
+    #     reward -= abs(degree)*10
+    # elif degree == 0: # next node has the same degree of current node
+    #     reward += 5 
         
     # third condition   
-    reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
+    # reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
 
         
     # forth condition  
-    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
+    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*20
     
     return reward
 

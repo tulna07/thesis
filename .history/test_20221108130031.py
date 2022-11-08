@@ -106,21 +106,19 @@ GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-epsilon = 0.9
-
 
 
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -170,12 +168,6 @@ def get_node_index(check_node , neighbor_nodes = []):
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
     
-    #variable to check degree between current node and next node
-    current_node_degree = len(Tree.path_to_root(current_node)) - 1
-    next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree
-    
-     
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
     neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
@@ -190,18 +182,9 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 500
         
     # second condition        
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*10
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*10
-    elif degree == 0: # next node has the same degree of current node
-        reward += 5 
-        
-    # third condition   
     reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
 
-        
-    # forth condition  
+    # third condition   
     reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
     
     return reward
@@ -228,7 +211,7 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
             break 
     return obs_ls    
                 
-def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table, obs_ls):
+def run_by_reinforcement_learning(epsilon,goal, vision_range, robot, Tree, obstacles, q_table, obs_ls):
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
@@ -251,7 +234,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     #take move base on highest q-value
     random_number = np.random.random() 
     if random_number > epsilon: 
-        action_take = "q_value"
+        action_take = "q_value: {} > {}".format(random_number,epsilon)
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -305,9 +288,9 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     return action_take , reward
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    epsilon = 0.9
     action_take = "No RL apply"
     save_q_table = True
-    total_path_length = 0
     shortest_path_length = 1000000
     q_table = handle_q_table(not save_q_table)
     for episode in range(HM_EPISODES):
@@ -324,20 +307,16 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
             if reach_goal(goal, robot):
                 break
            
-            action_take, reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,obs_ls)
+            action_take, reward = run_by_reinforcement_learning(epsilon,goal, vision_range, robot, Tree, obstacles,q_table,obs_ls)
             handle_q_table(save_q_table, q_table)
             episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
-        total_path_length = get_total_path_length(Tree.path_to_goal)
-        Tree.total_goal_cost = total_path_length
-        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", total path length:", total_path_length)        
-        shortest_path_length = print_shortest_path_length(shortest_path_length,total_path_length)
+        Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)
+        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", total path length:", Tree.total_goal_cost)        
+        shortest_path_length = print_shortest_path_length(shortest_path_length,Tree.total_goal_cost)
         
         reset_node_checkin(Tree)
-        total_path_length = 0
-        
-        global epsilon 
         epsilon *= EPS_DECAY
         
                 

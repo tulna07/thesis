@@ -7,7 +7,6 @@ from Program_config import *
 from Graph import Graph
 from reinforcement_learning import *
 import operator
-from math import sqrt
 
 #from RRTree_star import RRTree_star
 class Robot(Robot_base):
@@ -359,43 +358,45 @@ class Robot(Robot_base):
                     pt_is = line_across(ls, line_segments[idx])
                     if pt_is:
                         intersect = True
-                        break       
+                        break
+                    
             if not intersect:
                 temp_filter.append(visited_neighbor_nodes[idx])
             intersect = False
         return temp_filter
     
-    def nearest_line_segment(self, node, obs_ls):
+    def nearest_ls(self, node, obs_ls):
         shortest_distance = 0
         distance = 0
         nearest_ls = []
         for ls in obs_ls:
-            distance = point_dist(node.coords,ls[0]) + point_dist(node.coords,ls[1])
-            if shortest_distance == 0 or shortest_distance > distance:
-                shortest_distance = distance
-                nearest_ls = ls
+        distance = point_dist(node.coords,ls[0]) + point_dist(node.coords,ls[1])
+        if shortest_distance == 0 or shortest_distance > distance:
+            shortest_distance = distance
+            nearest_ls = ls
         return nearest_ls
-    
-    def cal_distance_to_line_segment(self,node, line_segment):
-        edge_1 = point_dist(node.coords,line_segment[0])
-        edge_2 = point_dist(node.coords,line_segment[1])
-        edge_3 = point_dist(line_segment[0],line_segment[1])
-        if edge_1 > edge_2 and edge_1 > edge_3:
-            distance = edge_2
-        elif edge_2 > edge_1 and edge_2 > edge_3:
-            distance = edge_1
-        else:           
-            p = (edge_1+edge_2+edge_3)/2
-            distance = (2*sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3)))/edge_3
-        return distance
-
-
     
     def avg_neighbors_distance_to_obs(self, neighbor_nodes, obs_ls):
         avg_neighbors_to_obs = []
-        nearest_ls = []
-        for node in neighbor_nodes:
-            nearest_ls = self.nearest_line_segment(node, obs_ls)
-            node_to_obs_distance = self.cal_distance_to_line_segment(node, nearest_ls)
-            avg_neighbors_to_obs.append(node_to_obs_distance)
+        temp_list = []
+        temp_distance = 0
+        for idx in range(len(neighbor_nodes)):
+            count = 0
+            for ls in obs_ls:
+                temp_list.append(point_dist(ls[0],neighbor_nodes[idx].coords))
+                
+            for temp in temp_list:    
+                if temp <= 5:
+                    count += 1
+                    temp_distance += temp
+                    
+            if count > 0:
+               temp_distance = temp_distance/count
+            else:
+                for temp in temp_list:  
+                    temp_distance += temp 
+                temp_distance = temp_distance/len(obs_ls)     
+                   
+            avg_neighbors_to_obs.append(temp_distance)
+        # avg_neighbors_to_obs = np.array(avg_neighbors_to_obs)/len(obs_ls)
         return avg_neighbors_to_obs

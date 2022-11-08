@@ -7,7 +7,7 @@ from Program_config import *
 from Graph import Graph
 from reinforcement_learning import *
 import operator
-from math import sqrt
+import math
 
 #from RRTree_star import RRTree_star
 class Robot(Robot_base):
@@ -359,7 +359,8 @@ class Robot(Robot_base):
                     pt_is = line_across(ls, line_segments[idx])
                     if pt_is:
                         intersect = True
-                        break       
+                        break
+                    
             if not intersect:
                 temp_filter.append(visited_neighbor_nodes[idx])
             intersect = False
@@ -376,14 +377,15 @@ class Robot(Robot_base):
                 nearest_ls = ls
         return nearest_ls
     
-    def cal_distance_to_line_segment(self,node, line_segment):
+    def cal_distance_to_line_segment(node, line_segment):
         edge_1 = point_dist(node.coords,line_segment[0])
         edge_2 = point_dist(node.coords,line_segment[1])
         edge_3 = point_dist(line_segment[0],line_segment[1])
-        if edge_1 > edge_2 and edge_1 > edge_3:
-            distance = edge_2
-        elif edge_2 > edge_1 and edge_2 > edge_3:
-            distance = edge_1
+        if (edge_1 > edge_2 and edge_1 > edge_3) or (edge_2 > edge_1 and edge_2 > edge_3):
+            if (edge_1 > edge_2):
+                distance = edge_2
+            else:
+                distance = edge_1 
         else:           
             p = (edge_1+edge_2+edge_3)/2
             distance = (2*sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3)))/edge_3

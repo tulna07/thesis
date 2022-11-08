@@ -113,14 +113,14 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -202,8 +202,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
 
         
     # forth condition  
-    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
-    
+    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*20
     return reward
 
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):

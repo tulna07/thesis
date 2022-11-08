@@ -100,27 +100,18 @@ class RRTree_star(RRTree):
         plotter.build_RRT_star(num_iter= self.sampling_size - 1, Tree=self, obstacles=obstacles, goal_coords=goal_coordinate, \
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
-# @ Tu
-HM_EPISODES = 600
-GOAL_REWARD = 1000
-EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
-LEARNING_RATE = 0.1
-DISCOUNT = 0.95
-epsilon = 0.9
-
-
 
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -170,12 +161,6 @@ def get_node_index(check_node , neighbor_nodes = []):
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
     
-    #variable to check degree between current node and next node
-    current_node_degree = len(Tree.path_to_root(current_node)) - 1
-    next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree
-    
-     
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
     neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
@@ -190,18 +175,9 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 500
         
     # second condition        
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*10
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*10
-    elif degree == 0: # next node has the same degree of current node
-        reward += 5 
-        
-    # third condition   
     reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
 
-        
-    # forth condition  
+    # third condition   
     reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
     
     return reward
@@ -305,6 +281,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     return action_take , reward
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
+    epsilon = 0.9
     action_take = "No RL apply"
     save_q_table = True
     total_path_length = 0

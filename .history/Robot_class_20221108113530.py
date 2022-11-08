@@ -7,7 +7,6 @@ from Program_config import *
 from Graph import Graph
 from reinforcement_learning import *
 import operator
-from math import sqrt
 
 #from RRTree_star import RRTree_star
 class Robot(Robot_base):
@@ -327,25 +326,51 @@ class Robot(Robot_base):
     def get_robot_coords(self):
         return self.coordinate
     
+    def check_in_obstacle(self, obstacles):
+        is_collision = obstacles.check_point_collision(point=self.coordinate,\
+                            obstacles_line_segments=obstacles.obstacles_line_segments)
+        return is_collision
+
+
+    def get_rrt_star_path_in_neighbours(self, path_to_goal, neighbour_nodes):
+        rrt_star_path_in_neighbours = []
+        for step in path_to_goal:
+            for node in neighbour_nodes:
+                if step.coords == node.coords:
+                    rrt_star_path_in_neighbours.append(step.coords)
+        return rrt_star_path_in_neighbours
+    
+    ''' serialize obstacle in to list of linesegments'''
+    def get_line_segments(self, path):
+        line_segments = []
+        for i in range (len(path) - 1):
+            line_segments.append( [path[i], path[i+1]] ) 
+
+        return line_segments
+
     ''' check rrt* path in vision range collides obstacles '''
     def check_path_collides_obstacles(self, path_line_segments, obstacles_line_segments):
-        check = False
-        obs_ls = []
         for obstracle_lss in obstacles_line_segments:
             for ls in obstracle_lss:
                 pt_is = line_across(ls, path_line_segments)
                 if pt_is:
-                    check = True
-                    break
-            if check:
-                obs_ls = obstracle_lss
-                break 
-        return check, obs_ls
+                    return True
+        return False
+    
+    # check neighbour nodes in obstacles at current position 
+    # def scan_obstacles(self, current_coords, neighbor_nodes, obstacles, path_to_goal):
+    #     if neighbor_nodes is None:
+    #         return []
+        
+    #     rrt_star_path_in_neighbours = self.get_rrt_star_path_in_neighbours(path_to_goal, neighbor_nodes)
+    #     rrt_star_path_in_neighbours.insert(0, current_coords)
+    #     line_segments = self.get_line_segments(rrt_star_path_in_neighbours)
+    #     return self.check_path_collides_obstacles(line_segments, obstacles.obstacles_line_segments)
     
     def check_intersection_obs(self, obstacles, node, next_node): 
         line_segment = ([node.coords, next_node.coords])
-        check, obs_ls = self.check_path_collides_obstacles(line_segment,obstacles.obstacles_line_segments)
-        return check, obs_ls
+        return self.check_path_collides_obstacles(line_segment,obstacles.obstacles_line_segments)
+    
        
     ''' check line segments between current node and its neighbors collide obstacles '''
     def check_neighbor_nodes_path(self, line_segments, obstacles, visited_neighbor_nodes):
@@ -359,43 +384,12 @@ class Robot(Robot_base):
                     pt_is = line_across(ls, line_segments[idx])
                     if pt_is:
                         intersect = True
-                        break       
+                        break
+                    
             if not intersect:
                 temp_filter.append(visited_neighbor_nodes[idx])
             intersect = False
         return temp_filter
     
-    def nearest_line_segment(self, node, obs_ls):
-        shortest_distance = 0
-        distance = 0
-        nearest_ls = []
-        for ls in obs_ls:
-            distance = point_dist(node.coords,ls[0]) + point_dist(node.coords,ls[1])
-            if shortest_distance == 0 or shortest_distance > distance:
-                shortest_distance = distance
-                nearest_ls = ls
-        return nearest_ls
-    
-    def cal_distance_to_line_segment(self,node, line_segment):
-        edge_1 = point_dist(node.coords,line_segment[0])
-        edge_2 = point_dist(node.coords,line_segment[1])
-        edge_3 = point_dist(line_segment[0],line_segment[1])
-        if edge_1 > edge_2 and edge_1 > edge_3:
-            distance = edge_2
-        elif edge_2 > edge_1 and edge_2 > edge_3:
-            distance = edge_1
-        else:           
-            p = (edge_1+edge_2+edge_3)/2
-            distance = (2*sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3)))/edge_3
-        return distance
-
-
-    
-    def avg_neighbors_distance_to_obs(self, neighbor_nodes, obs_ls):
-        avg_neighbors_to_obs = []
-        nearest_ls = []
-        for node in neighbor_nodes:
-            nearest_ls = self.nearest_line_segment(node, obs_ls)
-            node_to_obs_distance = self.cal_distance_to_line_segment(node, nearest_ls)
-            avg_neighbors_to_obs.append(node_to_obs_distance)
-        return avg_neighbors_to_obs
+    def avg_distance_to_obs(self, current_node, obstacles):
+        return

@@ -113,18 +113,25 @@ epsilon = 0.9
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
     return q_table
+
+def distance_compare(Tree = Tree, node_1 = Node, node_2 = Node):
+    root_coord = Tree.find_root(node_1).coords
+    distance_node_1 = point_dist(root_coord, node_1.coords)
+    distance_node_2 = point_dist(root_coord, node_2.coords)
+    distance = distance_node_1 - distance_node_2
+    return distance   
 
 def filter_path_to_neighbor_nodes(robot=Robot, current_node=Node , visited_neighbor_nodes= [], obstacles= Obstacles):
     temp_filter =[]
@@ -175,7 +182,8 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree
     
-     
+    distance = distance_compare(Tree,current_node,next_node)
+        
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
     neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
@@ -191,19 +199,25 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         
     # second condition        
     if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*10
+        reward += degree*5
     elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*10
+        reward -= abs(degree)*5
     elif degree == 0: # next node has the same degree of current node
-        reward += 5 
+        reward += 3 
         
     # third condition   
-    reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
+    # compare distance to goal(current vs next) 
+    if distance >= 0:
+        # reward += 20
+        reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
+    else:
+        # reward -= 20  
+        reward -= ranking_neighbors[next_node_idx]*10     
 
         
-    # forth condition  
-    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
-    
+    # forth condition      
+    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*20
+                          
     return reward
 
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
@@ -243,8 +257,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
-    avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
-    
+    avg_neighbors_to_obs = robot.avg_neighbor_distance_to_obs(visited_neighbor_nodes,obs_ls)
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     
