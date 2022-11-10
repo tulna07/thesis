@@ -203,20 +203,21 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     
     middle_value_neighbors = middle_value_in_list(ranking_neighbors)
     if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
-    
+        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*15     
     else:
-        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
-   
+        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*15    
   
     # fourth condition 
     ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
     
-    middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
-    if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
-        reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
+    # middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
+    middle_value_neighbors_to_obs = middle_value_in_list(avg_neighbors_to_obs)
+    if (avg_neighbors_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
+        reward -= (avg_neighbors_to_obs[next_node_idx] - middle_value_neighbors_to_obs)*50 
+        # reward -= ranking_neighbors_distance_to_obs[next_node_idx]*30     
     else:
-        reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50 
+        reward += (middle_value_neighbors_to_obs - avg_neighbors_to_obs[next_node_idx])*50 
+        # reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30 
 
     
     return reward

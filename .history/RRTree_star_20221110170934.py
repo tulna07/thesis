@@ -102,7 +102,7 @@ class RRTree_star(RRTree):
 
 # @ Tu
 HM_EPISODES = 600
-GOAL_REWARD = 5000
+GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
@@ -181,7 +181,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     # first condition
     # penalty if return to a checkin node
     if next_node.checkin:
-        reward -= 700
+        reward -= 500
         
     # second condition 
     #variable to check degree between current node and next node
@@ -203,21 +203,19 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     
     middle_value_neighbors = middle_value_in_list(ranking_neighbors)
     if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
-    
+        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10     
     else:
-        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
-   
+        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10    
   
     # fourth condition 
     ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
     
     middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
     if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
-        reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
+        # reward -= (ranking_neighbors_distance_to_obs[next_node_idx] - middle_value_neighbors_to_obs)*60 
+         reward -= ranking_neighbors_distance_to_obs[next_node_idx]*30     
     else:
-        reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50 
-
+        # reward += (middle_value_neighbors_to_obs - ranking_neighbors_distance_to_obs[next_node_idx])*60 
     
     return reward
 
@@ -426,11 +424,11 @@ if __name__ == '__main__':
     
     start_cooridinate = menu_result.sx, menu_result.sy
     goal_coordinate = menu_result.gx, menu_result.gy
-    print("input node:",start_cooridinate)
     if read_tree:
         start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
         goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
     
+    print("exist node:",start_cooridinate)
     
     step_size = menu_result.step_size
     radius = menu_result.radius
@@ -452,7 +450,7 @@ if __name__ == '__main__':
     #check if start and goal collide obstacle
     start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
     goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
-    print("start node:",start_cooridinate)
+    print("final node:",start_cooridinate)
     
     # find working space boundary
     x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])

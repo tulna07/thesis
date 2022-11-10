@@ -203,10 +203,12 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     
     middle_value_neighbors = middle_value_in_list(ranking_neighbors)
     if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
+        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*15 
+        # reward -= ranking_neighbors[next_node_idx]*20     
     
     else:
-        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
+        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*15 
+        # reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*20 
    
   
     # fourth condition 

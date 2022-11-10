@@ -181,7 +181,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     # first condition
     # penalty if return to a checkin node
     if next_node.checkin:
-        reward -= 700
+        reward -= 500
         
     # second condition 
     #variable to check degree between current node and next node
@@ -204,9 +204,11 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     middle_value_neighbors = middle_value_in_list(ranking_neighbors)
     if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
         reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
+        # reward -= ranking_neighbors[next_node_idx]*20     
     
     else:
         reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
+        # reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*20 
    
   
     # fourth condition 

@@ -101,7 +101,7 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
-HM_EPISODES = 600
+HM_EPISODES = 700
 GOAL_REWARD = 5000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
@@ -203,20 +203,20 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     
     middle_value_neighbors = middle_value_in_list(ranking_neighbors)
     if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
-    
+        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10     
     else:
-        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
-   
+        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10    
   
     # fourth condition 
     ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
     
     middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
     if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
-        reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
+        reward -= (ranking_neighbors_distance_to_obs[next_node_idx] - middle_value_neighbors_to_obs)*50 
+        # reward -= ranking_neighbors_distance_to_obs[next_node_idx]*30     
     else:
-        reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50 
+        reward += (middle_value_neighbors_to_obs - ranking_neighbors_distance_to_obs[next_node_idx])*50 
+        # reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30 
 
     
     return reward

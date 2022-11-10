@@ -28,7 +28,7 @@ def menu_RRT():
     parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=30.0)
     parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=94.0)
     
-    # 33,57 83 (78)
+    # 33,57 84 (78)
     # 85,20 118
     # 99,60 99.81
     

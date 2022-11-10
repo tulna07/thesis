@@ -1,6 +1,5 @@
 from xmlrpc.client import Boolean
 import numpy as np
-
 from Tree import Tree, Node
 from RRTree import RRTree
 from RRT_draw_lib import Plot_RRT
@@ -101,26 +100,26 @@ class RRTree_star(RRTree):
                     start_coords=start_coordinate, color_tree=TreeColor.by_cost)
 
 # @ Tu
+epsilon = 0.9
 HM_EPISODES = 600
-GOAL_REWARD = 5000
+GOAL_REWARD = 1000
 EPS_DECAY = 0.99  # Every episode will be epsilon*EPS_DECAY
 LEARNING_RATE = 0.1
 DISCOUNT = 0.95
-epsilon = 0.9
 
 
 
 def handle_q_table(save=Boolean, save_q_table={}):
     #save q_table
     if save:
-        with open("qtable.pickle", "wb") as f:
+        with open("qtable1.pickle", "wb") as f:
             pickle.dump(save_q_table, f)
         return
 
     # initialize the q-table#
     q_table = {}
     try:
-        with open("qtable.pickle", "rb") as f:
+        with open("qtable1.pickle", "rb") as f:
             q_table = pickle.load(f)
     except:
         q_table = {}
@@ -166,58 +165,38 @@ def get_node_index(check_node , neighbor_nodes = []):
         if check_node.coords == neighbor_nodes[node].coords:
             node_idx = node
             return node_idx
-
-def middle_value_in_list(list=[]):
-    middle_value = 0
-    for val in list:
-        middle_value += val
-    middle_value = middle_value/len(list)
-    return middle_value    
     
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
-    next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     
-    # first condition
-    # penalty if return to a checkin node
-    if next_node.checkin:
-        reward -= 700
-        
-    # second condition 
-    #variable to check degree between current node and next node
-    current_node_degree = len(Tree.path_to_root(current_node)) - 1
-    next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree       
-    if degree >= 1: # next node belongs to parent degree of current node
-        reward += degree*1.5
-    elif degree <= -1: # next node belongs to children degree of current node
-        reward -= abs(degree)*1.5
-    elif degree == 0: # next node has the same degree of current node
-        reward += 1
-        
-    # third condition   
+    next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
     neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
     neighbors_avg_length = np.array(neighbors_length_to_current) + np.array(neighbors_length_to_root)
     ranking_neighbors = ranking_list(neighbors_avg_length)
-    
-    middle_value_neighbors = middle_value_in_list(ranking_neighbors)
-    if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-        reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
-    
-    else:
-        reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
-   
-  
-    # fourth condition 
-    ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
-    
-    middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
-    if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
-        reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
-    else:
-        reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50 
+    ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs)
 
+    
+    # first condition
+    # penalty if return to a checkin node
+    if next_node.checkin:
+        reward -= 500
+    
+    current_node_degree = len(Tree.path_to_root(current_node)) - 1
+    next_node_degree = len(Tree.path_to_root(next_node)) - 1
+    degree = current_node_degree - next_node_degree       
+    if degree >= 1: # next node belongs to parent degree of current node
+        reward += degree*2
+    elif degree <= -1: # next node belongs to children degree of current node
+        reward -= abs(degree)*2
+    elif degree == 0: # next node has the same degree of current node
+        reward += 1 
+           
+    # second condition        
+    # reward += (len(ranking_neighbors) - ranking_neighbors[next_node_idx])*10     
+
+    # third condition   
+    reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30
     
     return reward
 
@@ -247,11 +226,10 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
-    reward = 0
     avg_neighbors_to_obs = []
     
     robot_state = robot.get_robot_coords()
-    current_node = Tree.get_node_by_coords(robot_state)
+    current_node = Tree.get_node_by_coords(robot_state)       
     neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
     
     # filter neighbor nodes that is inside obstacles
@@ -260,6 +238,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
     avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     
@@ -319,15 +298,12 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     return action_take , reward
         
-def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
+def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree):
     action_take = "No RL apply"
     save_q_table = True
     total_path_length = 0
     shortest_path_length = 1000000
     q_table = handle_q_table(not save_q_table)
-    if view_map:
-        global HM_EPISODES
-        HM_EPISODES = 1
     for episode in range(HM_EPISODES):
         episode_reward = 0
         robot = Robot(start=start, goal=goal, vision_range=vision_range)
@@ -343,8 +319,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
                 break
            
             action_take, reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,obs_ls)
-            if not view_map:
-                handle_q_table(save_q_table, q_table)
+            handle_q_table(save_q_table, q_table)
             episode_reward += reward
             
         Tree.path_to_goal = path_to_goal
@@ -359,50 +334,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         global epsilon 
         epsilon *= EPS_DECAY
         
-def choose_exist_node(input_node_coords, Tree = Tree):
-    input_coords = ()
-    nearest_node = 0
-    nodes_coords = Tree.all_nodes_coordinate()
-    for node_coords in nodes_coords:
-        temp_distance = point_dist(input_node_coords, node_coords)
-        if nearest_node == 0 or nearest_node >= temp_distance:
-            if temp_distance == 0:
-                return node_coords
-            nearest_node = temp_distance
-            input_coords = node_coords
-    return input_coords        
-
-def get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords = []):
-    nearest_coords = ()
-    nearest_node = 0
-    checked = False
-    for node_coords in nodes_coords:
-        for checked_node_coords in checked_nodes_coords:
-            if node_coords == checked_node_coords:
-                checked = True
-                break
-        if not checked:    
-            temp_distance = point_dist(input_node_coords, node_coords)
-            if nearest_node == 0 or nearest_node > temp_distance:
-                nearest_node = temp_distance
-                nearest_coords = node_coords
-        else:
-            checked = False
-            continue        
-    return nearest_coords
-
-    
-def check_node_obs(Tree = Tree, input_node_coords=(), obstacles = Obstacles, checked_nodes_coords= []):
-    nodes_coords = Tree.all_nodes_coordinate()
-    nearest_node_coords = input_node_coords
-    check_in_obs = True
-    while check_in_obs:
-        check_in_obs = obstacles.check_point_collision(nearest_node_coords, obstacles.obstacles_line_segments)
-        if check_in_obs:
-            checked_nodes_coords.append(nearest_node_coords)
-            nearest_node_coords = get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords) 
- 
-    return nearest_node_coords        
                 
 if __name__ == '__main__':
     
@@ -421,39 +352,26 @@ if __name__ == '__main__':
     # get user input
     menu_result = menu_RRT()
     # get start_cooridinate and goal_coordinate
-    
-    
-    
     start_cooridinate = menu_result.sx, menu_result.sy
     goal_coordinate = menu_result.gx, menu_result.gy
-    print("input node:",start_cooridinate)
-    if read_tree:
-        start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
-        goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
-    
-    
+
     step_size = menu_result.step_size
     radius = menu_result.radius
     sample_size = menu_result.ss
     map_name = menu_result.m
     world_name = None
-    view_map = menu_result.view
+
     ''' Running '''
     # set same window size to capture pictures
     plotter = Plot_RRT(title="Rapidly-exploring Random Tree Star (RRT*)")
     plotter.set_equal()
 
-    ''' get obstacles data whether from world (if indicated) or map (by default)'''
     obstacles = Obstacles()
+    ''' get obstacles data whether from world (if indicated) or map (by default)'''
     obstacles.read(world_name, map_name)
     # @Tu
     obstacles.line_segments()
 
-    #check if start and goal collide obstacle
-    start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
-    goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
-    print("start node:",start_cooridinate)
-    
     # find working space boundary
     x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])
     x_max = max(obstacles.x_lim[1], obstacles.y_lim[1], start_cooridinate[1], goal_coordinate[1])
@@ -482,7 +400,7 @@ if __name__ == '__main__':
         '''
         train(start=start_cooridinate, goal=goal_coordinate,\
             obstacles=obstacles, vision_range=5,\
-            Tree=RRT_star, view_map=view_map)
+            Tree=RRT_star)
 
         ''' 
             draw the result: obstacles + RRT* + robot path 
