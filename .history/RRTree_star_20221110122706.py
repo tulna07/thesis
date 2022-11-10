@@ -232,7 +232,6 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
-    reward = 0
     avg_neighbors_to_obs = []
     
     robot_state = robot.get_robot_coords()
@@ -245,6 +244,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
     avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     
@@ -410,8 +410,6 @@ if __name__ == '__main__':
         start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
         goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
     
-    print("exist node:",start_cooridinate)
-    
     step_size = menu_result.step_size
     radius = menu_result.radius
     sample_size = menu_result.ss
@@ -433,7 +431,8 @@ if __name__ == '__main__':
     start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
     goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
 
-    print("final node:",start_cooridinate)
+    print(start_cooridinate)
+    print(goal_coordinate)
     
     # find working space boundary
     x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])

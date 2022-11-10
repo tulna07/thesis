@@ -327,10 +327,6 @@ class Robot(Robot_base):
     def get_robot_coords(self):
         return self.coordinate
     
-    ''' Check whether current node is inside obstacle or not '''
-    def check_inside_obstacles(self, current_coords, obstacles):
-        return obstacles.check_point_collision(point=current_coords, obstacles_line_segments=obstacles.obstacles_line_segments)
-    
     ''' check rrt* path in vision range collides obstacles '''
     def check_path_collides_obstacles(self, path_line_segments, obstacles_line_segments):
         check = False
@@ -390,17 +386,14 @@ class Robot(Robot_base):
             distance = edge_1
         else:           
             p = (edge_1+edge_2+edge_3)/2
-            s = sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3))    
-            distance = (2*s)/edge_3   
+            distance = (2*sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3)))/edge_3
         return distance
-    
-    def node_distance_to_obs(self, node, obs_ls):
-        nearest_ls = self.nearest_line_segment(node, obs_ls)
-        return self.cal_distance_to_line_segment(node, nearest_ls)
     
     def avg_neighbors_distance_to_obs(self, neighbor_nodes, obs_ls):
         avg_neighbors_to_obs = []
+        nearest_ls = []
         for node in neighbor_nodes:
-            node_to_obs_distance = self.node_distance_to_obs(node, obs_ls)
+            nearest_ls = self.nearest_line_segment(node, obs_ls)
+            node_to_obs_distance = self.cal_distance_to_line_segment(node, nearest_ls)
             avg_neighbors_to_obs.append(node_to_obs_distance)
         return avg_neighbors_to_obs

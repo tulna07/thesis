@@ -236,6 +236,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     avg_neighbors_to_obs = []
     
     robot_state = robot.get_robot_coords()
+    print(robot_state)
+    return action_take, reward
     current_node = Tree.get_node_by_coords(robot_state)       
     neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
     

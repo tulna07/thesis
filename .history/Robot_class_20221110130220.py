@@ -391,16 +391,20 @@ class Robot(Robot_base):
         else:           
             p = (edge_1+edge_2+edge_3)/2
             s = sqrt(p*(p-edge_1)*(p-edge_2)*(p-edge_3))    
-            distance = (2*s)/edge_3   
+            distance = (2*s)/edge_3
+        # print(node.coords)    
+        # print("edge_1:" ,edge_1, "edge_2:" ,edge_2, "edge_3:" ,edge_3)    
+        # print("distance:",distance)    
         return distance
     
-    def node_distance_to_obs(self, node, obs_ls):
-        nearest_ls = self.nearest_line_segment(node, obs_ls)
-        return self.cal_distance_to_line_segment(node, nearest_ls)
-    
     def avg_neighbors_distance_to_obs(self, neighbor_nodes, obs_ls):
+        visited_neighbor_nodes = []
         avg_neighbors_to_obs = []
+        nearest_ls = []
         for node in neighbor_nodes:
-            node_to_obs_distance = self.node_distance_to_obs(node, obs_ls)
-            avg_neighbors_to_obs.append(node_to_obs_distance)
-        return avg_neighbors_to_obs
+            nearest_ls = self.nearest_line_segment(node, obs_ls)
+            node_to_obs_distance = self.cal_distance_to_line_segment(node, nearest_ls)
+            if node_to_obs_distance > 0:
+                visited_neighbor_nodes.append(node)
+                avg_neighbors_to_obs.append(node_to_obs_distance)
+        return avg_neighbors_to_obs, visited_neighbor_nodes

@@ -232,7 +232,6 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
-    reward = 0
     avg_neighbors_to_obs = []
     
     robot_state = robot.get_robot_coords()
@@ -245,6 +244,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
     avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     
@@ -364,7 +364,7 @@ def get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords = [])
                 break
         if not checked:    
             temp_distance = point_dist(input_node_coords, node_coords)
-            if nearest_node == 0 or nearest_node > temp_distance:
+            if (nearest_node == 0 or nearest_node > temp_distance) and temp_distance > 0:
                 nearest_node = temp_distance
                 nearest_coords = node_coords
         else:
@@ -375,14 +375,15 @@ def get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords = [])
     
 def check_node_obs(Tree = Tree, input_node_coords=(), obstacles = Obstacles, checked_nodes_coords= []):
     nodes_coords = Tree.all_nodes_coordinate()
-    nearest_node_coords = input_node_coords
-    check_in_obs = True
-    while check_in_obs:
-        check_in_obs = obstacles.check_point_collision(nearest_node_coords, obstacles.obstacles_line_segments)
-        if check_in_obs:
-            checked_nodes_coords.append(nearest_node_coords)
-            nearest_node_coords = get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords)  
-    return nearest_node_coords        
+    chech_in_obs = obstacles.check_point_collision(input_node_coords, obstacles.obstacles_line_segments)
+    if chech_in_obs:
+        checked_nodes_coords.append(input_node_coords)
+        input_node_coords = get_nearest_node(input_node_coords, nodes_coords, checked_nodes_coords)
+        print(input_node_coords)
+        input_node_coords = check_node_obs(Tree, input_node_coords, obstacles, checked_nodes_coords)
+        print(input_node_coords)
+
+    return input_node_coords
                 
 if __name__ == '__main__':
     
@@ -410,8 +411,6 @@ if __name__ == '__main__':
         start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
         goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
     
-    print("exist node:",start_cooridinate)
-    
     step_size = menu_result.step_size
     radius = menu_result.radius
     sample_size = menu_result.ss
@@ -433,8 +432,9 @@ if __name__ == '__main__':
     start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
     goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
 
-    print("final node:",start_cooridinate)
-    
+    print(start_cooridinate)
+    print(goal_coordinate)
+
     # find working space boundary
     x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])
     x_max = max(obstacles.x_lim[1], obstacles.y_lim[1], start_cooridinate[1], goal_coordinate[1])

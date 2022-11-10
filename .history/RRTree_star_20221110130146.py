@@ -232,7 +232,6 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     robot_action = 0 
     robot_action_idx = 0
     action_take = ""
-    reward = 0
     avg_neighbors_to_obs = []
     
     robot_state = robot.get_robot_coords()
@@ -244,7 +243,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # filter neighbor nodes path
     visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
-    avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    avg_neighbors_to_obs, visited_neighbor_nodes = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     
