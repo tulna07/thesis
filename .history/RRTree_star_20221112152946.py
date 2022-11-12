@@ -186,11 +186,11 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         reward -= 1000
     else:            
         
-        # second condition
-        neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)   
-        # neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
-        # neighbors_avg_length = np.array(neighbors_length_to_current) + np.array(neighbors_length_to_root)
-        ranking_neighbors = ranking_list(neighbors_length_to_root)
+        # second condition   
+        neighbors_length_to_current = Tree.distances(current_node.coords, visited_neighbor_nodes)
+        neighbors_length_to_root =Tree.distances(Tree.root.coords, visited_neighbor_nodes)
+        neighbors_avg_length = np.array(neighbors_length_to_current) + np.array(neighbors_length_to_root)
+        ranking_neighbors = ranking_list(neighbors_avg_length)
         
         middle_value_neighbors = middle_value_in_list(ranking_neighbors)
         if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):

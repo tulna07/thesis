@@ -14,8 +14,8 @@ def menu_RRT():
     parser.add_argument('-radius', metavar="neighbour radius", type=float, help='radius', default=10.0)
     parser.add_argument('-r', metavar="vision range", type=float, help='vision range', default=10.0)
     parser.add_argument('-view', "--view", action='store_true', help='view map', default=False)
-    
     # draw the tree
+    
     parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=65.0)
     parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=65.0)
     parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=5.0)
