@@ -435,7 +435,7 @@ if __name__ == '__main__':
     obstacles.read(world_name, map_name)
     obstacles.line_segments()   
     random_area = ([0, 0], [100, 100])
-    
+     
     goal_coordinate = menu_result.gx, menu_result.gy
         
     if not read_tree:

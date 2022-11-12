@@ -435,7 +435,7 @@ if __name__ == '__main__':
     obstacles.read(world_name, map_name)
     obstacles.line_segments()   
     random_area = ([0, 0], [100, 100])
-    
+     
     goal_coordinate = menu_result.gx, menu_result.gy
         
     if not read_tree:
@@ -466,6 +466,7 @@ if __name__ == '__main__':
             start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
             print("start node:",start_cooridinate)
             
+            
             ''' 
                 train the robot , use the sample tree
             '''
@@ -477,7 +478,7 @@ if __name__ == '__main__':
                 draw the result: obstacles + RRT* + robot path 
             ''' 
             RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
-                plotter=plotter, obstacles=obstacles)
+                                plotter=plotter, obstacles=obstacles)
         
     plotter.show()
 

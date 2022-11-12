@@ -194,10 +194,10 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         
         middle_value_neighbors = middle_value_in_list(ranking_neighbors)
         if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*15 
+            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
         
         else:
-            reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*15 
+            reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
     
     
     # fourth condition 
@@ -249,6 +249,7 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table, obs_ls):
     robot_action = 0 
     robot_action_idx = 0
+    action_take = ""
     reward = 0
     avg_neighbors_to_obs = []
     
@@ -268,6 +269,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
     if uniform_float_arr[idx] > epsilon: 
+        action_take = "q_value"
         robot_action_idx = np.argmax(q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -278,6 +280,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # take random move
     
     else:
+        action_take = "random"
         if visited_neighbor_nodes:
             robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
             for idx in range(len(robot.grid_coordinates)):
@@ -317,9 +320,10 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         new_q = (1 - LEARNING_RATE) * current_q + LEARNING_RATE * (reward + DISCOUNT * max_future_q)
         q_table[robot_state][robot_action_idx] = new_q
     
-    return reward
+    return action_take , reward
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
+    action_take = "No RL apply"
     save_q_table = True
     total_path_length = 0
     shortest_path_length = 1000000
@@ -341,7 +345,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             if reach_goal(goal, robot):
                 break
            
-            reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,obs_ls)
+            action_take, reward = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,obs_ls)
             if not view_map:
                 handle_q_table(save_q_table, q_table)
             episode_reward += reward
@@ -349,7 +353,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         Tree.path_to_goal = path_to_goal
         total_path_length = get_total_path_length(Tree.path_to_goal)
         Tree.total_goal_cost = total_path_length
-        print("episode:", episode+1, ", total nodes:", len(Tree.path_to_goal), ", total path length:", total_path_length)        
+        print("episode:", episode+1 , ", action:", action_take , ", total nodes:", len(Tree.path_to_goal), ", total path length:", total_path_length)        
         shortest_path_length = print_shortest_path_length(shortest_path_length,total_path_length)
         
         reset_node_checkin(Tree)
@@ -433,13 +437,31 @@ if __name__ == '__main__':
     ''' get obstacles data whether from world (if indicated) or map (by default)'''
     obstacles = Obstacles()
     obstacles.read(world_name, map_name)
-    obstacles.line_segments()   
-    random_area = ([0, 0], [100, 100])
+    # @Tu
+    obstacles.line_segments()    
     
+    for point in arr:
+    start_cooridinate = menu_result.sx, menu_result.sy
     goal_coordinate = menu_result.gx, menu_result.gy
+    print("input node:",start_cooridinate)
+    if read_tree:
+        #check if input node exist
+        start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
+        goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
         
+        #check if start and goal collide obstacle
+        start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
+        goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
+        print("start node:",start_cooridinate)
+    
+    # find working space boundary
+    x_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])
+    x_max = max(obstacles.x_lim[1], obstacles.y_lim[1], start_cooridinate[1], goal_coordinate[1])
+    y_min = min(obstacles.x_lim[0], obstacles.y_lim[0], start_cooridinate[0], goal_coordinate[0])
+    y_max = max(obstacles.x_lim[1], obstacles.y_lim[1], start_cooridinate[1], goal_coordinate[1])
+    random_area = ([x_min, y_min], [x_max, y_max])
+
     if not read_tree:
-        start_cooridinate = menu_result.sx, menu_result.sy
         '''
             build tree
         '''
@@ -455,29 +477,18 @@ if __name__ == '__main__':
             pickle.dump(RRT_star, f)
 
     else:
-        arr = [(33, 57), (85, 20), (99, 60),  (2, 80), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
-        for point in arr:
-            start_cooridinate = point
-            print("input node:",start_cooridinate)       
-            #check if input node exist
-            start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
-            
-            #check if start and goal collide obstacle
-            start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
-            print("start node:",start_cooridinate)
-            
-            ''' 
-                train the robot , use the sample tree
-            '''
-            train(start=start_cooridinate, goal=goal_coordinate,\
-                obstacles=obstacles, vision_range=5,\
-                Tree=RRT_star, view_map=view_map)
+        ''' 
+            train the robot , use the sample tree
+        '''
+        train(start=start_cooridinate, goal=goal_coordinate,\
+            obstacles=obstacles, vision_range=5,\
+            Tree=RRT_star, view_map=view_map)
 
-            ''' 
-                draw the result: obstacles + RRT* + robot path 
-            ''' 
-            RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
-                plotter=plotter, obstacles=obstacles)
+        ''' 
+            draw the result: obstacles + RRT* + robot path 
+        ''' 
+        RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
+                            plotter=plotter, obstacles=obstacles)
         
     plotter.show()
 

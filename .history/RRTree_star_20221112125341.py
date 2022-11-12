@@ -194,7 +194,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         
         middle_value_neighbors = middle_value_in_list(ranking_neighbors)
         if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*15 
+            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
         
         else:
             reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*15 
@@ -435,11 +435,23 @@ if __name__ == '__main__':
     obstacles.read(world_name, map_name)
     obstacles.line_segments()   
     random_area = ([0, 0], [100, 100])
+ 
+    # arr = [(2, 80), (27, 56), (12, 59),  (79, 37), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
     
+    start_cooridinate = menu_result.sx, menu_result.sy
     goal_coordinate = menu_result.gx, menu_result.gy
+    print("input node:",start_cooridinate)
+    if read_tree:
+        #check if input node exist
+        start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
+        # goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
         
+        #check if start and goal collide obstacle
+        start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
+        # goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
+        print("start node:",start_cooridinate)
+    
     if not read_tree:
-        start_cooridinate = menu_result.sx, menu_result.sy
         '''
             build tree
         '''
@@ -455,29 +467,18 @@ if __name__ == '__main__':
             pickle.dump(RRT_star, f)
 
     else:
-        arr = [(33, 57), (85, 20), (99, 60),  (2, 80), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
-        for point in arr:
-            start_cooridinate = point
-            print("input node:",start_cooridinate)       
-            #check if input node exist
-            start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
-            
-            #check if start and goal collide obstacle
-            start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
-            print("start node:",start_cooridinate)
-            
-            ''' 
-                train the robot , use the sample tree
-            '''
-            train(start=start_cooridinate, goal=goal_coordinate,\
-                obstacles=obstacles, vision_range=5,\
-                Tree=RRT_star, view_map=view_map)
+        ''' 
+            train the robot , use the sample tree
+        '''
+        train(start=start_cooridinate, goal=goal_coordinate,\
+            obstacles=obstacles, vision_range=5,\
+            Tree=RRT_star, view_map=view_map)
 
-            ''' 
-                draw the result: obstacles + RRT* + robot path 
-            ''' 
-            RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
-                plotter=plotter, obstacles=obstacles)
+        ''' 
+            draw the result: obstacles + RRT* + robot path 
+        ''' 
+        RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
+                            plotter=plotter, obstacles=obstacles)
         
     plotter.show()
 

@@ -23,10 +23,14 @@ def menu_RRT():
     
     # training
     
-    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=85.0)
-    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=20.0)
+    parser.add_argument('-sx', metavar="start_x", type=float, help='start point x', default=99.0)
+    parser.add_argument('-sy', metavar="start_y", type=float, help='start point y', default=60.0)
     parser.add_argument('-gx', metavar="goal_x", type=float, help='goal point x', default=30.0)
     parser.add_argument('-gy', metavar="goal_y", type=float, help='goal point y', default=94.0)
+    
+    # 33,57 83 (78)
+    # 85,20 118
+    # 99,60 99.81
     
     args = parser.parse_args()
 

@@ -194,10 +194,10 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         
         middle_value_neighbors = middle_value_in_list(ranking_neighbors)
         if (ranking_neighbors[next_node_idx] >= middle_value_neighbors):
-            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*15 
+            reward -= (ranking_neighbors[next_node_idx] - middle_value_neighbors)*10 
         
         else:
-            reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*15 
+            reward += (middle_value_neighbors - ranking_neighbors[next_node_idx])*10 
     
     
     # fourth condition 
@@ -435,37 +435,40 @@ if __name__ == '__main__':
     obstacles.read(world_name, map_name)
     obstacles.line_segments()   
     random_area = ([0, 0], [100, 100])
-    
-    goal_coordinate = menu_result.gx, menu_result.gy
-        
-    if not read_tree:
-        start_cooridinate = menu_result.sx, menu_result.sy
-        '''
-            build tree
-        '''
-        start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
-        RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=5, 
-                        random_area=random_area, sample_size=sample_size)
-        RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
-        
-        ''' 
-            save the tree
-        '''
-        with open('rrt_star.pickle', 'wb') as f:
-            pickle.dump(RRT_star, f)
-
-    else:
-        arr = [(33, 57), (85, 20), (99, 60),  (2, 80), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
-        for point in arr:
-            start_cooridinate = point
-            print("input node:",start_cooridinate)       
+ 
+    # arr = [(2, 80), (27, 56), (12, 59),  (79, 37), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
+    arr = [(2,80)]
+    for point in arr:
+        epsilon = 0.9
+        start_cooridinate = point #menu_result.sx, menu_result.sy
+        goal_coordinate = menu_result.gx, menu_result.gy
+        print("input node:",start_cooridinate)
+        if read_tree:
             #check if input node exist
             start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
+            # goal_coordinate = choose_exist_node(goal_coordinate, RRT_star)
             
             #check if start and goal collide obstacle
             start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
+            # goal_coordinate = check_node_obs(RRT_star, goal_coordinate, obstacles)
             print("start node:",start_cooridinate)
+        
+        if not read_tree:
+            '''
+                build tree
+            '''
+            start_node = Node(start_cooridinate, cost=0)            # initial root node, cost to root = 0
+            RRT_star = RRTree_star(root=start_node, step_size=step_size, radius=5, 
+                            random_area=random_area, sample_size=sample_size)
+            RRT_star.build(goal_coordinate=goal_coordinate, plotter=plotter, obstacles=obstacles, show_animation=True)
             
+            ''' 
+                save the tree
+            '''
+            with open('rrt_star.pickle', 'wb') as f:
+                pickle.dump(RRT_star, f)
+
+        else:
             ''' 
                 train the robot , use the sample tree
             '''
@@ -477,7 +480,7 @@ if __name__ == '__main__':
                 draw the result: obstacles + RRT* + robot path 
             ''' 
             RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
-                plotter=plotter, obstacles=obstacles)
+                                plotter=plotter, obstacles=obstacles)
         
     plotter.show()
 

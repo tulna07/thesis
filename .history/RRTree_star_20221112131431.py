@@ -435,7 +435,7 @@ if __name__ == '__main__':
     obstacles.read(world_name, map_name)
     obstacles.line_segments()   
     random_area = ([0, 0], [100, 100])
-    
+     
     goal_coordinate = menu_result.gx, menu_result.gy
         
     if not read_tree:
@@ -455,6 +455,10 @@ if __name__ == '__main__':
             pickle.dump(RRT_star, f)
 
     else:
+        # 33,57 83 (78)
+        # 85,20 118
+        # 99,60 99.81
+        # 2,80
         arr = [(33, 57), (85, 20), (99, 60),  (2, 80), (93, 47), (99, 64), (89, 84), (70, 68), (26, 62), (56, 73)]
         for point in arr:
             start_cooridinate = point
@@ -465,6 +469,7 @@ if __name__ == '__main__':
             #check if start and goal collide obstacle
             start_cooridinate = check_node_obs(RRT_star, start_cooridinate, obstacles)
             print("start node:",start_cooridinate)
+            
             
             ''' 
                 train the robot , use the sample tree
@@ -477,7 +482,7 @@ if __name__ == '__main__':
                 draw the result: obstacles + RRT* + robot path 
             ''' 
             RRT_star.draw_RRT_star(goal_coordinate=goal_coordinate, start_coordinate=start_cooridinate,\
-                plotter=plotter, obstacles=obstacles)
+                                plotter=plotter, obstacles=obstacles)
         
     plotter.show()
 
