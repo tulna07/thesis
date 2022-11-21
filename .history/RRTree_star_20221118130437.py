@@ -174,34 +174,7 @@ def middle_value_in_list(list=[]):
         middle_value += val
     middle_value = middle_value/len(list)
     return middle_value    
-
-def get_node_and_neighbors(Tree,robot,obstacles, vision_range,robot_state):
-    current_node = Tree.get_node_by_coords(robot_state)
-    neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
     
-    # filter neighbor nodes that is inside obstacles
-    visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
-    # filter neighbor nodes path
-    visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
-    
-    return current_node, neighbor_nodes, visited_neighbor_nodes   
-
-def update_q_table(q_table, temp_q_table,Tree,robot,obstacles, vision_range):
-    for temp_key in temp_q_table:
-            for key in q_table:
-                if key == temp_key:
-                    _, neighbor_nodes, visited_neighbor_nodes = get_node_and_neighbors(Tree,robot,obstacles, vision_range,temp_key)
-                    for index in range(len(visited_neighbor_nodes)):
-                        for idx in range(len(neighbor_nodes)):
-                            if visited_neighbor_nodes[index].coords == neighbor_nodes[idx].coords:
-                                if q_table[key][idx] == 0:
-                                    q_table[key][idx] = temp_q_table[temp_key][index] 
-                                else:
-                                    q_table[key][idx] = (temp_q_table[temp_key][index] + q_table[key][idx])/2
-
-                                break
-                    break            
-                                                  
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
@@ -209,7 +182,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     # first condition
     # penalty if return to a checkin node
     if next_node.checkin:
-        reward -= 2000
+        reward -= 1000
     else:            
         # second condition 
         #variable to check degree between current node and next node
@@ -261,26 +234,32 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
             robot.generate_grid_coordinates()
             break 
     return obs_ls    
-         
+                
 def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table,temp_q_table, obs_ls,view_map=False):
     robot_action = 0 
     robot_action_idx = 0
     reward = 0
     avg_neighbors_to_obs = []
+    
     robot_state = robot.get_robot_coords()
-    current_node, neighbor_nodes, visited_neighbor_nodes = get_node_and_neighbors(Tree,robot,obstacles,vision_range,robot_state)
+    current_node = Tree.get_node_by_coords(robot_state)
+    neighbor_nodes = Tree.neighbour_nodes(robot_state, vision_range)
+    
+    # filter neighbor nodes that is inside obstacles
+    visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(neighbor_nodes, obstacles)
+    # filter neighbor nodes path
+    visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,current_node,visited_neighbor_nodes,obstacles)
     # average neighbor nodes distance to obstacle
     avg_neighbors_to_obs = robot.avg_neighbors_distance_to_obs(visited_neighbor_nodes,obs_ls)
+    
+    temp_q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]
     if not robot_state in q_table:
         q_table[robot_state] = [0 for i in range(len(neighbor_nodes))]
-    if not robot_state in temp_q_table: 
-        temp_q_table[robot_state] = [0 for i in range(len(visited_neighbor_nodes))]  
-    if sum(temp_q_table[robot_state]) == 0 and not sum(q_table[robot_state]) == 0:
+    else:
         for id in range(len(visited_neighbor_nodes)):
             for index in range(len(neighbor_nodes)):
                 if visited_neighbor_nodes[id].coords == neighbor_nodes[index].coords:
-                    temp_q_table[robot_state][id] = q_table[robot_state][index]
-                    break
+                   temp_q_table[robot_state][id] = q_table[robot_state][index] 
            
     
     #take move base on highest q-value
@@ -306,7 +285,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # Take the action!
     robot.action(robot_action)
     robot_next_state = robot.get_robot_coords()
-    next_node, next_neighbor_nodes, next_visited_neighbor_nodes = get_node_and_neighbors(Tree,robot,obstacles,vision_range,robot_next_state)
+    next_node = Tree.get_node_by_coords(robot_next_state)
     if not view_map:   
         robot.is_reach_goal(goal)           
         if robot.reach_goal:
@@ -318,16 +297,20 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
             
         # update q table 
         
+        next_neighbor_nodes = Tree.neighbour_nodes(robot_next_state, vision_range)
+        # filter neighbor nodes that is inside obstacles
+        next_visited_neighbor_nodes = Tree.get_visited_neighbor_nodes(next_neighbor_nodes, obstacles)
+        # filter neighbor nodes path
+        next_visited_neighbor_nodes = filter_path_to_neighbor_nodes(robot,next_node,next_visited_neighbor_nodes,obstacles)
+        
+        temp_q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
         if not robot_next_state in q_table:
             q_table[robot_next_state] = [0 for i in range(len(next_neighbor_nodes))]
-        if not robot_next_state in temp_q_table:
-            temp_q_table[robot_next_state] = [0 for i in range(len(next_visited_neighbor_nodes))]
-        if sum(temp_q_table[robot_next_state]) == 0 and not sum(q_table[robot_next_state]) == 0:
+        else:
             for id in range(len(next_visited_neighbor_nodes)):
                 for index in range(len(next_neighbor_nodes)):
                     if next_visited_neighbor_nodes[id].coords == next_neighbor_nodes[index].coords:
                         temp_q_table[robot_next_state][id] = q_table[robot_next_state][index]
-                        break
                             
         max_future_q = np.max(temp_q_table[robot_next_state])
         current_q = temp_q_table[robot_state][robot_action_idx]
@@ -343,6 +326,8 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         temp_q_table[robot_state][robot_action_idx] = new_q
         
     return
+
+def update_q_table(q_table, temp_)
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
     save_q_table = True
@@ -365,7 +350,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             # reach goal
             if reach_goal(goal, robot):
                 break
-                    
+           
             run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map)
             
         Tree.path_to_goal = path_to_goal
@@ -382,8 +367,6 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         global epsilon 
         epsilon *= EPS_DECAY
     if not view_map:
-        robot = Robot(start=start, goal=goal, vision_range=vision_range)
-        update_q_table(q_table, temp_q_table, Tree, robot, obstacles , vision_range)
         handle_q_table(save_q_table, q_table)    
         
 def choose_exist_node(input_node_coords, Tree = Tree):
@@ -484,10 +467,10 @@ if __name__ == '__main__':
             pickle.dump(RRT_star, f)
 
     else:
-        input_array = [(8, 9), (29, 4), (46, 2),  (55, 0), (64, 10), (54, 38), (35, 39), (28, 48), (5, 42), (2, 53)]
+        input_array = [(48,8), (8, 9), (29, 4), (46, 2),  (55, 0), (64, 10), (54, 38), (35, 39), (28, 48), (5, 42), (2, 53)]
         for idx in range(len(input_array)):
             epsilon = 0.9
-            start_cooridinate = input_array[idx+6]
+            start_cooridinate = input_array[idx+0]
             print("input node:",start_cooridinate)       
             #check if input node exist
             start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
@@ -511,7 +494,7 @@ if __name__ == '__main__':
                 else:
                     print("Finish training.") 
                     
-            # break
+            break
         ''' 
         draw the result: obstacles + RRT* + robot path 
         ''' 

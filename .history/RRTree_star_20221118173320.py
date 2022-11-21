@@ -487,7 +487,7 @@ if __name__ == '__main__':
         input_array = [(8, 9), (29, 4), (46, 2),  (55, 0), (64, 10), (54, 38), (35, 39), (28, 48), (5, 42), (2, 53)]
         for idx in range(len(input_array)):
             epsilon = 0.9
-            start_cooridinate = input_array[idx+6]
+            start_cooridinate = input_array[idx+0]
             print("input node:",start_cooridinate)       
             #check if input node exist
             start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)

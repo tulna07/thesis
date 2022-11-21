@@ -190,7 +190,7 @@ def update_q_table(q_table, temp_q_table,Tree,robot,obstacles, vision_range):
     for temp_key in temp_q_table:
             for key in q_table:
                 if key == temp_key:
-                    _, neighbor_nodes, visited_neighbor_nodes = get_node_and_neighbors(Tree,robot,obstacles, vision_range,temp_key)
+                    current_node, neighbor_nodes, visited_neighbor_nodes = get_node_and_neighbors(Tree,robot,obstacles, vision_range,temp_key)
                     for index in range(len(visited_neighbor_nodes)):
                         for idx in range(len(neighbor_nodes)):
                             if visited_neighbor_nodes[index].coords == neighbor_nodes[idx].coords:
@@ -209,7 +209,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     # first condition
     # penalty if return to a checkin node
     if next_node.checkin:
-        reward -= 2000
+        reward -= 1000
     else:            
         # second condition 
         #variable to check degree between current node and next node
@@ -487,7 +487,7 @@ if __name__ == '__main__':
         input_array = [(8, 9), (29, 4), (46, 2),  (55, 0), (64, 10), (54, 38), (35, 39), (28, 48), (5, 42), (2, 53)]
         for idx in range(len(input_array)):
             epsilon = 0.9
-            start_cooridinate = input_array[idx+6]
+            start_cooridinate = input_array[idx+0]
             print("input node:",start_cooridinate)       
             #check if input node exist
             start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
@@ -511,7 +511,7 @@ if __name__ == '__main__':
                 else:
                     print("Finish training.") 
                     
-            # break
+            break
         ''' 
         draw the result: obstacles + RRT* + robot path 
         ''' 
