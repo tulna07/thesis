@@ -295,7 +295,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
-    if uniform_float_arr[idx] > epsilon or view_map or randomness >= 100: 
+    if uniform_float_arr[idx] > epsilon or view_map or randomness >= 500: 
         robot_action_idx = np.argmax(temp_q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):

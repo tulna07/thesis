@@ -272,7 +272,7 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
             break 
     return obs_ls    
          
-def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table,temp_q_table, obs_ls,view_map=False,randomness=int):
+def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table,temp_q_table, obs_ls,view_map=False):
     robot_action = 0 
     robot_action_idx = 0
     reward = 0
@@ -295,7 +295,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
-    if uniform_float_arr[idx] > epsilon or view_map or randomness >= 100: 
+    if uniform_float_arr[idx] > epsilon or view_map: 
         robot_action_idx = np.argmax(temp_q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -306,7 +306,6 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # take random move
     
     else:
-        randomness += 1
         robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
         for idx in range(len(robot.grid_coordinates)):
             if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:
@@ -349,12 +348,11 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
         temp_q_table[robot_state][robot_action_idx] = new_q
         
-    return randomness
+    return
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
     save_q_table = True
     shortest_path = []
-    randomness = 0
     q_table = handle_q_table(not save_q_table)
     temp_q_table = {}
     if view_map:
@@ -373,7 +371,10 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             if reach_goal(goal, robot):
                 break
             
-            randomness = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map,randomness)
+            if episode >= 550 and episode < 600:
+
+            else:       
+                run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map)
             
         Tree.path_to_goal = path_to_goal
         Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)
@@ -381,8 +382,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         if episode%50 == 0:
             shortest_path_length = get_total_path_length(shortest_path)
             print("Episode:", episode+1,", node:", start, ", total path length:", Tree.total_goal_cost)
-            print("Shortest path length:", shortest_path_length)
-        randomness = 0            
+            print("Shortest path length:", shortest_path_length)        
         
         reset_node_checkin(Tree)
         
