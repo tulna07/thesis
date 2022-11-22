@@ -229,16 +229,17 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
         middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
         if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
+            if check
             reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
         else:
             current_to_root = point_dist(current_node.coords,Tree.root.coords)  
             next_to_root = point_dist(next_node.coords,Tree.root.coords)
             distance = current_to_root - next_to_root
-            # reward += distance*3
+            reward += distance*3
             if distance >= 0:
-                reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*60
+                reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
             else:
-                reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*20  
+                reward -= (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50  
                            
                                              
     return reward
