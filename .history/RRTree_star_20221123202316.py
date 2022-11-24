@@ -231,31 +231,36 @@ def random_index(array=[],visited_neighbor_nodes=[]):
         if node.checkin:
             count += 1
     if count == len(visited_neighbor_nodes):
+        random_index = np.argmax(array)
+    while check:
         random_index = np.random.randint(len(array))
-    else:    
-        while check:
-            random_index = np.random.randint(len(array))
-            if not visited_neighbor_nodes[random_index].checkin:
-                check = False
+        if not visited_neighbor_nodes[random_index].checkin:
+            check = False
     return random_index            
                                                   
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
 
+    # first condition
+    # penalty if return to a checkin node
+    # if next_node.checkin:
+    #     reward -= 2000
+    # else:
                 
+    # second condition 
     #variable to check degree between current node and next node
     current_node_degree = len(Tree.path_to_root(current_node)) - 1
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree       
-    # if degree >= 1: # next node belongs to parent degree of current node
-    #     reward += degree*2
-    # elif degree <= -1: # next node belongs to children degree of current node
-    #     reward -= abs(degree)*2
-    # elif degree == 0: # next node has the same degree of current node
-    #     reward += 1
+    if degree >= 1: # next node belongs to parent degree of current node
+        reward += degree*2
+    elif degree <= -1: # next node belongs to children degree of current node
+        reward -= abs(degree)*2
+    elif degree == 0: # next node has the same degree of current node
+        reward += 1
     
-    
+    # third condition
     ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
     middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
     if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
@@ -264,11 +269,11 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         current_to_root = point_dist(current_node.coords,Tree.root.coords)  
         next_to_root = point_dist(next_node.coords,Tree.root.coords)
         distance = current_to_root - next_to_root
-        reward += distance
+        # reward += distance
         if distance >= 0:
-            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
+            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*60
         else:
-            reward -= (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*10  
+            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30  
                            
                                              
     return reward
@@ -314,10 +319,15 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
                 if visited_neighbor_nodes[id].coords == neighbor_nodes[index].coords:
                     temp_q_table[robot_state][id] = q_table[robot_state][index]
                     break
+     
+    print("state: ",robot_state)
+    for node in visited_neighbor_nodes:
+        print(node.coords, node.checkin)    
            
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
     if uniform_float_arr[idx] > epsilon or view_map or randomness >= 100: 
+        # robot_action_idx = np.argmax(temp_q_table[robot_state])
         robot_action_idx = highest_value_index(temp_q_table[robot_state],visited_neighbor_nodes)
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -329,6 +339,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     else:
         randomness += 1
+        # robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
         robot_action_idx = random_index(temp_q_table[robot_state],visited_neighbor_nodes)
         for idx in range(len(robot.grid_coordinates)):
             if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:

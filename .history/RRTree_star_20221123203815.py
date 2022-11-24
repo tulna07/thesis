@@ -248,12 +248,12 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     current_node_degree = len(Tree.path_to_root(current_node)) - 1
     next_node_degree = len(Tree.path_to_root(next_node)) - 1
     degree = current_node_degree - next_node_degree       
-    # if degree >= 1: # next node belongs to parent degree of current node
-    #     reward += degree*2
-    # elif degree <= -1: # next node belongs to children degree of current node
-    #     reward -= abs(degree)*2
-    # elif degree == 0: # next node has the same degree of current node
-    #     reward += 1
+    if degree >= 1: # next node belongs to parent degree of current node
+        reward += degree*2
+    elif degree <= -1: # next node belongs to children degree of current node
+        reward -= abs(degree)*2
+    elif degree == 0: # next node has the same degree of current node
+        reward += 1
     
     
     ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
@@ -261,14 +261,12 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
         reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
     else:
-        current_to_root = point_dist(current_node.coords,Tree.root.coords)  
-        next_to_root = point_dist(next_node.coords,Tree.root.coords)
-        distance = current_to_root - next_to_root
-        reward += distance
-        if distance >= 0:
-            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
-        else:
-            reward -= (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*10  
+        reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*60
+    current_to_root = point_dist(current_node.coords,Tree.root.coords)  
+    next_to_root = point_dist(next_node.coords,Tree.root.coords)
+    distance = current_to_root - next_to_root
+    # reward += distance
+
                            
                                              
     return reward

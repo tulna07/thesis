@@ -264,7 +264,7 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
         current_to_root = point_dist(current_node.coords,Tree.root.coords)  
         next_to_root = point_dist(next_node.coords,Tree.root.coords)
         distance = current_to_root - next_to_root
-        reward += distance
+        # reward += distance*2
         if distance >= 0:
             reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
         else:

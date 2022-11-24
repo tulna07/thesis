@@ -203,72 +203,42 @@ def update_q_table(q_table, temp_q_table,Tree,robot,obstacles, vision_range):
 
                                 break
                     break            
-
-def highest_value_index(array=[],visited_neighbor_nodes=[]):
-    temp_arr = array.copy()
-    check = True
-    highest_index = 0
-    count = 0
-    for node in visited_neighbor_nodes:
-        if node.checkin:
-            count += 1
-    if count == len(visited_neighbor_nodes):
-        highest_index = np.argmax(temp_arr)
-    else:
-        while check:
-            highest_index = np.argmax(temp_arr)
-            if visited_neighbor_nodes[highest_index].checkin:
-                temp_arr[highest_index] = -2000
-            else:
-                check = False
-    return highest_index
-
-def random_index(array=[],visited_neighbor_nodes=[]):
-    check = True
-    random_index = 0
-    count = 0
-    for node in visited_neighbor_nodes:
-        if node.checkin:
-            count += 1
-    if count == len(visited_neighbor_nodes):
-        random_index = np.random.randint(len(array))
-    else:    
-        while check:
-            random_index = np.random.randint(len(array))
-            if not visited_neighbor_nodes[random_index].checkin:
-                check = False
-    return random_index            
                                                   
 def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
 
-                
-    #variable to check degree between current node and next node
-    current_node_degree = len(Tree.path_to_root(current_node)) - 1
-    next_node_degree = len(Tree.path_to_root(next_node)) - 1
-    degree = current_node_degree - next_node_degree       
-    # if degree >= 1: # next node belongs to parent degree of current node
-    #     reward += degree*2
-    # elif degree <= -1: # next node belongs to children degree of current node
-    #     reward -= abs(degree)*2
-    # elif degree == 0: # next node has the same degree of current node
-    #     reward += 1
-    
-    
-    ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
-    middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
-    if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
-        reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
-    else:
-        current_to_root = point_dist(current_node.coords,Tree.root.coords)  
-        next_to_root = point_dist(next_node.coords,Tree.root.coords)
-        distance = current_to_root - next_to_root
-        reward += distance
-        if distance >= 0:
-            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
+    # first condition
+    # penalty if return to a checkin node
+    # if next_node.checkin:
+    #     reward -= 2000
+    # else:            
+        # second condition 
+        #variable to check degree between current node and next node
+        current_node_degree = len(Tree.path_to_root(current_node)) - 1
+        next_node_degree = len(Tree.path_to_root(next_node)) - 1
+        degree = current_node_degree - next_node_degree       
+        if degree >= 1: # next node belongs to parent degree of current node
+            reward += degree*2
+        elif degree <= -1: # next node belongs to children degree of current node
+            reward -= abs(degree)*2
+        elif degree == 0: # next node has the same degree of current node
+            reward += 1
+        
+        # third condition
+        ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
+        middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
+        if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
+            reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
         else:
-            reward -= (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*10  
+            current_to_root = point_dist(current_node.coords,Tree.root.coords)  
+            next_to_root = point_dist(next_node.coords,Tree.root.coords)
+            distance = current_to_root - next_to_root
+            # reward += distance
+            if distance >= 0:
+                reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*60
+            else:
+                reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*30  
                            
                                              
     return reward
@@ -315,10 +285,11 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
                     temp_q_table[robot_state][id] = q_table[robot_state][index]
                     break
            
+    
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
     if uniform_float_arr[idx] > epsilon or view_map or randomness >= 100: 
-        robot_action_idx = highest_value_index(temp_q_table[robot_state],visited_neighbor_nodes)
+        robot_action_idx = np.argmax(temp_q_table[robot_state])
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
             if chosen_node_coords == robot.grid_coordinates[idx]:
@@ -329,7 +300,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
     else:
         randomness += 1
-        robot_action_idx = random_index(temp_q_table[robot_state],visited_neighbor_nodes)
+        robot_action_idx = np.random.randint(len(visited_neighbor_nodes))
         for idx in range(len(robot.grid_coordinates)):
             if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:
                 robot_action = idx
@@ -403,7 +374,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         Tree.path_to_goal = path_to_goal
         Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)
         shortest_path = get_shortest_path_length(shortest_path,Tree.path_to_goal)
-
+        # if episode%50 == 0:
         shortest_path_length = get_total_path_length(shortest_path)
         if goal_reached:
             print("Episode:", episode+1,", node:", start, ", total path length:", Tree.total_goal_cost)
