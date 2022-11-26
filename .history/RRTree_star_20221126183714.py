@@ -248,19 +248,19 @@ def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited
     current_to_root = point_dist(current_node.coords,Tree.root.coords)  
     next_to_root = point_dist(next_node.coords,Tree.root.coords)
     distance = current_to_root - next_to_root
-    
     for child_node in current_node.children:
         if child_node.coords == next_node.coords:
             reward -= 500
-            return reward
+            re
+        
+    reward += distance
 
     if (ranking_neighbors_distance_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
         if distance >= 0:
-            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*10
+            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*20
         else:    
             reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
     else:
-        reward += distance
         if distance >= 0:
             reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
         else:
@@ -517,7 +517,7 @@ if __name__ == '__main__':
         input_array = [(8, 9), (29, 4), (46, 2),  (55, 0), (64, 10), (54, 38), (35, 39), (28, 48), (5, 42), (2, 53)]
         for idx in range(len(input_array)):
             epsilon = 0.9
-            start_cooridinate = input_array[idx+0]
+            start_cooridinate = input_array[idx+6]
             print("input node:",start_cooridinate)       
             #check if input node exist
             start_cooridinate = choose_exist_node(start_cooridinate, RRT_star)
