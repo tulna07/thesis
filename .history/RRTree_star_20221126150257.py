@@ -384,7 +384,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             if goal_reached:
                 break
             
-            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map)
+            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map,randomness)
             
         Tree.path_to_goal = path_to_goal
         Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)

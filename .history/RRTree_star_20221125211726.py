@@ -239,25 +239,25 @@ def random_index(array=[],visited_neighbor_nodes=[]):
                 check = False
     return random_index            
                                                   
-def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[],current_to_obs=0):
+def evaluate_reward(Tree = Tree, current_node = Node, next_node = Node , visited_neighbor_nodes=[], avg_neighbors_to_obs=[]):
     reward = 0
-    ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
-    middle_value_neighbors_to_obs = middle_value_in_list(ranking_neighbors_distance_to_obs)
-    # middle_value_neighbors_to_obs = middle_value_in_list(avg_neighbors_to_obs)
+    # ranking_neighbors_distance_to_obs = ranking_list(avg_neighbors_to_obs) 
+    middle_value_neighbors_to_obs = middle_value_in_list(avg_neighbors_to_obs)
     next_node_idx = get_node_index(next_node,visited_neighbor_nodes)
     current_to_root = point_dist(current_node.coords,Tree.root.coords)  
     next_to_root = point_dist(next_node.coords,Tree.root.coords)
     distance = current_to_root - next_to_root
     
-    if (ranking_neighbors_distance_to_obs[next_node_idx] > middle_value_neighbors_to_obs):
+    if (avg_neighbors_to_obs[next_node_idx] >= middle_value_neighbors_to_obs):
         reward -= ranking_neighbors_distance_to_obs[next_node_idx]*50     
     else:
         reward += distance*3
         if distance >= 0:
-            reward += (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50
+            reward += (middle_value_neighbors_to_obs - avg_neighbors_to_obs[next_node_idx])*50
         else:
-            reward -= (len(ranking_neighbors_distance_to_obs) - ranking_neighbors_distance_to_obs[next_node_idx])*50   
-                                                                 
+            reward -= (middle_value_neighbors_to_obs - avg_neighbors_to_obs[next_node_idx])*50   
+                           
+                                             
     return reward
 
 def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
@@ -282,7 +282,7 @@ def run_by_rrtstar(robot=Robot,Tree=Tree, path_to_goal=[]):
             break 
     return obs_ls    
          
-def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table,temp_q_table, obs_ls,view_map=False):
+def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_table,temp_q_table, obs_ls,view_map=False,randomness=int):
     robot_action = 0 
     robot_action_idx = 0
     reward = 0
@@ -304,7 +304,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
            
     #take move base on highest q-value
     idx = rng.integers(0,len(uniform_float_arr))
-    if uniform_float_arr[idx] > epsilon or view_map: 
+    if uniform_float_arr[idx] > epsilon or view_map or randomness >= 500: 
         robot_action_idx = highest_value_index(temp_q_table[robot_state],visited_neighbor_nodes)
         chosen_node_coords = visited_neighbor_nodes[robot_action_idx].coords
         for idx in range(len(robot.grid_coordinates)):
@@ -315,6 +315,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     # take random move
     
     else:
+        randomness += 1
         robot_action_idx = random_index(temp_q_table[robot_state],visited_neighbor_nodes)
         for idx in range(len(robot.grid_coordinates)):
             if visited_neighbor_nodes[robot_action_idx].coords == robot.grid_coordinates[idx]:
@@ -331,8 +332,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
         if robot.reach_goal:
             reward = GOAL_REWARD
         else:
-            current_to_obs = robot.cal_distance_to_line_segment(current_node,robot.nearest_line_segment(current_node,obs_ls))
-            reward = evaluate_reward(Tree, current_node, next_node, visited_neighbor_nodes, avg_neighbors_to_obs,current_to_obs)
+            reward = evaluate_reward(Tree, current_node, next_node, visited_neighbor_nodes, avg_neighbors_to_obs)
    
             
         next_node.set_checkin() #checkin node
@@ -359,7 +359,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
         temp_q_table[robot_state][robot_action_idx] = new_q
         
-    return
+    return randomness
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
     save_q_table = True
@@ -377,6 +377,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         path_to_goal = []
 
         for i in range(800):
+            randomness = 0
             obs_ls = run_by_rrtstar(robot, Tree, path_to_goal)
 
             # reach goal
@@ -384,7 +385,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             if goal_reached:
                 break
             
-            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map)
+            randomness = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map,randomness)
             
         Tree.path_to_goal = path_to_goal
         Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)

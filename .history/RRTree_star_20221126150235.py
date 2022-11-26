@@ -359,7 +359,7 @@ def run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles, q_
     
         temp_q_table[robot_state][robot_action_idx] = new_q
         
-    return
+    return randomness
         
 def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_map=False):
     save_q_table = True
@@ -377,6 +377,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
         path_to_goal = []
 
         for i in range(800):
+            randomness = 0
             obs_ls = run_by_rrtstar(robot, Tree, path_to_goal)
 
             # reach goal
@@ -384,7 +385,7 @@ def train(start, goal, obstacles=Obstacles(), vision_range=5, Tree=Tree, view_ma
             if goal_reached:
                 break
             
-            run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map)
+            randomness = run_by_reinforcement_learning(goal, vision_range, robot, Tree, obstacles,q_table,temp_q_table,obs_ls,view_map,randomness)
             
         Tree.path_to_goal = path_to_goal
         Tree.total_goal_cost = get_total_path_length(Tree.path_to_goal)
